@@ -33,14 +33,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func requestPermissions() {
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(options)
+        log.info("launch: ax=\(AXIsProcessTrusted()) listen=\(CGPreflightListenEventAccess())")
         if !CGPreflightListenEventAccess() { _ = CGRequestListenEventAccess() }
     }
 
     private func startMonitor() {
-        if monitor.start() { return }
+        if monitor.start() && hasAccessibility { return }
         retryTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] timer in
             guard let self else { timer.invalidate(); return }
-            if self.monitor.start() { timer.invalidate(); self.updateIcon() }
+            if self.monitor.start() && self.hasAccessibility { timer.invalidate() }
+            self.updateIcon()
         }
     }
 
@@ -53,6 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: - Conversion
 
     private func convert() {
+        log.info("convert: enabled=\(self.enabled) ax=\(self.hasAccessibility) secure=\(IsSecureEventInputEnabled()) buffer=\(self.monitor.buffer.count)")
         guard enabled, hasAccessibility, !IsSecureEventInputEnabled() else { return }
         let layouts = Layouts.enabled()
         guard layouts.count >= 2 else { NSSound.beep(); return }

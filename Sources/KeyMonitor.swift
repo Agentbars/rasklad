@@ -29,6 +29,8 @@ final class KeyMonitor {
     @discardableResult
     func start() -> Bool {
         if tap != nil { return true }
+        // Without Input Monitoring a tap can still be created but never receives events.
+        guard CGPreflightListenEventAccess() else { return false }
         let types: [CGEventType] = [.keyDown, .flagsChanged, .leftMouseDown, .rightMouseDown, .otherMouseDown]
         let mask = types.reduce(CGEventMask(0)) { $0 | (CGEventMask(1) << $1.rawValue) }
         let callback: CGEventTapCallBack = { _, type, event, refcon in
@@ -40,7 +42,11 @@ final class KeyMonitor {
         guard let tap = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap,
                                           options: .listenOnly, eventsOfInterest: mask,
                                           callback: callback,
-                                          userInfo: Unmanaged.passUnretained(self).toOpaque()) else { return false }
+                                          userInfo: Unmanaged.passUnretained(self).toOpaque()) else {
+            log.error("event tap: create failed (Input Monitoring not granted?)")
+            return false
+        }
+        log.info("event tap: started")
         let runLoopSource = CFMachPortCreateRunLoopSource(nil, tap, 0)
         CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
@@ -70,6 +76,7 @@ final class KeyMonitor {
     private func handle(_ type: CGEventType, _ event: CGEvent) {
         switch type {
         case .tapDisabledByTimeout, .tapDisabledByUserInput:
+            log.error("event tap: disabled by system (\(type.rawValue)), re-enabling")
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
             return
         default: break
@@ -123,6 +130,7 @@ final class KeyMonitor {
                                option: flags.contains(.maskAlternate),
                                capsLock: flags.contains(.maskAlphaShift))
         buffer.append(TypedKey(stroke: stroke, produced: produced))
+        log.debug("key: buffered, buffer=\(self.buffer.count)")
         bufferLayouts.append(currentLayoutID ?? "")
         if buffer.count > 300 {
             buffer.removeFirst(100)
@@ -134,6 +142,7 @@ final class KeyMonitor {
         let code = event.getIntegerValueField(.keyboardEventKeycode)
         let flags = event.flags
         let now = ProcessInfo.processInfo.systemUptime
+        log.debug("flags: key=\(code) flags=\(String(flags.rawValue, radix: 16))")
         guard code == 56 || code == 60 else { // not left/right Shift
             shiftClean = false
             lastShiftTapAt = 0
@@ -146,12 +155,14 @@ final class KeyMonitor {
         }
         // released
         defer { shiftClean = false }
+        log.debug("shift: released clean=\(self.shiftClean) held=\(now - (self.shiftDownAt ?? now))")
         guard shiftClean, let down = shiftDownAt, now - down < Self.maxTapLength else {
             lastShiftTapAt = 0
             return
         }
         if lastShiftTapAt > 0, now - lastShiftTapAt < Self.doubleTapInterval {
             lastShiftTapAt = 0
+            log.info("shift: double tap")
             DispatchQueue.main.async { [weak self] in self?.onTrigger?() }
         } else {
             lastShiftTapAt = now

@@ -40,6 +40,23 @@ swiftc -swift-version 5 -framework Carbon -framework Cocoa Sources/Layouts.swift
 
 The tests use the layouts enabled on your Mac and expect ABC (or US) and Russian.
 
+## Troubleshooting
+
+Logs (no typed characters, only event kinds and counts):
+
+```bash
+/usr/bin/log stream --predicate 'subsystem == "local.rasklad"' --level debug
+```
+
+If `launch: ax=false listen=false` stays even though Rasklad is switched on in System Settings,
+the switch belongs to an older build. Reset it and grant again, then relaunch:
+
+```bash
+tccutil reset All local.rasklad
+```
+
+Newly granted permissions are picked up only after Rasklad is relaunched.
+
 ## Code
 
 | File | What it does |
