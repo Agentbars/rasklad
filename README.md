@@ -18,6 +18,10 @@ Typed `ghbdtn` instead of `привет`? Double-tap **Shift** and it's fixed.
 - Works with any layouts enabled in System Settings (ABC, Russian, ...). With more than two,
   repeated taps cycle through them.
 - Password fields are never touched (macOS secure input).
+- **Feedback.** Each conversion plays a soft "Tink" and shows a small hint like `EN → RU`
+  next to the text caret (or the mouse pointer if the app doesn't report the caret). The hint
+  fades out in under a second and never takes focus. Turn either off in the menu:
+  «Звук при исправлении», «Подсказка на экране».
 
 Typed keys are remembered only since the last click, arrow key, Return or shortcut, and only
 in memory. Nothing is stored or sent anywhere.
@@ -75,6 +79,7 @@ Newly granted permissions are picked up only after Rasklad is relaunched.
 | `Sources/Converter.swift` | Last-word and phrase-span selection, text conversion (pure logic) |
 | `Sources/KeyMonitor.swift` | Listen-only event tap, typed-keys buffer, double-Shift detection |
 | `Sources/TextOutput.swift` | Synthetic backspaces and Unicode typing |
+| `Sources/Feedback.swift` | Conversion sound and the `EN → RU` hint near the caret |
 | `Sources/main.swift` | Menu bar UI, permissions, launch at login |
 
 ## License

@@ -72,6 +72,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             : Layouts.next(after: spanLayout, in: layouts)
         guard let target else { return }
         let range = step.convert
+        let sourceID = monitor.layoutID(at: range.upperBound - 1) ?? Layouts.currentID()
         let word = monitor.buffer[range]
         let trailing = monitor.buffer[range.upperBound...]
         let newWord = Converter.retype(word, in: target)
@@ -82,6 +83,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         monitor.replace(range, with: newWord, layoutID: target.id)
         phrase.record(step.span, buffer: monitor.buffer)
         Layouts.select(target)
+        Feedback.show(from: sourceID, to: target, in: layouts)
     }
 
     /// Nothing typed since the last click or arrow key: convert the selected text instead.
@@ -102,6 +104,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             TextOutput.type(result.text)
             Layouts.select(result.target)
             self.monitor.reset()
+            Feedback.show(from: nil, to: result.target, in: layouts)
         }
     }
 
@@ -158,6 +161,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let login = item("Открывать при входе", #selector(toggleLogin))
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(login)
+        Feedback.menuItems().forEach(menu.addItem)
 
         menu.addItem(.separator())
         menu.addItem(item("Выйти", #selector(quit), key: "q"))
