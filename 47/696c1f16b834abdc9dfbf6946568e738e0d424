@@ -1,0 +1,27 @@
+README.md
+  s_16ea2eea86e36a::t_00e905eb3ad9ca 6,12-17,118
+Sources/Converter.swift
+  s_16ea2eea86e36a::t_7a4c170e0304fc 56-62,64-66,69-74,77-90
+Sources/KeyMonitor.swift
+  s_16ea2eea86e36a::t_a39aa5ac485e50 12-14,33,67-88,141,160,164-167
+Sources/main.swift
+  s_16ea2eea86e36a::t_cef5d49be14830 67,72-75,78-80
+Tests/main.swift
+  s_16ea2eea86e36a::t_153932f1710cb0 35-49,52-57,59-61,63-75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "47696c1f16b834abdc9dfbf6946568e738e0d424",
+  "prompts": {},
+  "sessions": {
+    "s_16ea2eea86e36a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "44322237-8bc2-4c60-8358-1691f647bcde",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Agentbars <50992557+Agentbars@users.noreply.github.com>"
+    }
+  }
+}
