@@ -73,6 +73,23 @@ check(Converter.nextStep(in: keys("  cd", in: abc), extending: 2..<4)?.kind == .
       "toggle", "step kind toggle at buffer start")
 check(Converter.nextStep(in: keys("ab", in: abc), extending: 0..<9)?.span == 0..<2 ? "word" : "other",
       "word", "stale span falls back to last word")
+// Per-app exclusions
+func yes(_ b: Bool) -> String { b ? "yes" : "no" }
+var ex = ExclusionList()
+check(yes(ex.isExcluded("com.apple.Terminal")), "yes", "default terminal")
+check(yes(ex.isExcluded("com.jetbrains.intellij")), "yes", "jetbrains prefix")
+check(yes(ex.isExcluded("com.jetbrainsfoo")), "no", "prefix needs the dot")
+check(yes(ex.isExcluded("com.apple.Safari")), "no", "safari not excluded")
+check(yes(ex.isExcluded(nil)), "no", "nil bundle id")
+ex.toggle("com.apple.Safari")
+check(yes(ex.isExcluded("com.apple.Safari")), "yes", "toggle on")
+ex.toggle("com.apple.Safari")
+check(yes(ex.isExcluded("com.apple.Safari")), "no", "toggle off")
+ex.toggle("com.jetbrains.pycharm")
+check(yes(ex.isExcluded("com.jetbrains.intellij")), "no", "toggle off removes prefix entry")
+ex.remove("com.apple.Terminal")
+check(yes(ex.isExcluded("com.apple.Terminal")), "no", "remove")
+check(yes(ExclusionList([]).isExcluded("com.apple.Terminal")), "no", "empty list")
 
 print(failures == 0 ? "ALL PASSED" : "\(failures) FAILED")
 exit(failures == 0 ? 0 : 1)

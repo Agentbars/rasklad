@@ -22,6 +22,10 @@ Typed `ghbdtn` instead of `привет`? Double-tap **Shift** and it's fixed.
   next to the text caret (or the mouse pointer if the app doesn't report the caret). The hint
   fades out in under a second and never takes focus. Turn either off in the menu:
   «Звук при исправлении», «Подсказка на экране».
+- **Excluded apps.** In excluded apps Rasklad neither remembers keys nor reacts to double Shift.
+  Menu → «Не работать в «…»» toggles the app you were in; «Исключения» lists them (click to remove).
+  By default: Terminal, iTerm2, Warp, Ghostty, kitty, Alacritty, WezTerm, all JetBrains IDEs
+  (`com.jetbrains.*`, where double Shift is Search Everywhere) and Android Studio.
 
 Typed keys are remembered only since the last click, arrow key, Return or shortcut, and only
 in memory. Nothing is stored or sent anywhere.
@@ -49,7 +53,7 @@ Without it the app is signed ad-hoc and macOS asks for permissions again after e
 ## Tests
 
 ```bash
-swiftc -swift-version 5 -framework Carbon -framework Cocoa Sources/Layouts.swift Sources/Converter.swift Tests/main.swift -o build/tests && ./build/tests
+swiftc -swift-version 5 -framework Carbon -framework Cocoa Sources/Layouts.swift Sources/Converter.swift Sources/Exclusions.swift Tests/main.swift -o build/tests && ./build/tests
 ```
 
 The tests use the layouts enabled on your Mac and expect ABC (or US) and Russian.
@@ -78,6 +82,7 @@ Newly granted permissions are picked up only after Rasklad is relaunched.
 | `Sources/Layouts.swift` | Enabled layouts, key → character via `UCKeyTranslate`, reverse maps |
 | `Sources/Converter.swift` | Last-word and phrase-span selection, text conversion (pure logic) |
 | `Sources/KeyMonitor.swift` | Listen-only event tap, typed-keys buffer, double-Shift detection |
+| `Sources/Exclusions.swift` | Per-app exclusions: list (pure logic), storage, frontmost app, menu items |
 | `Sources/TextOutput.swift` | Synthetic backspaces and Unicode typing |
 | `Sources/Feedback.swift` | Conversion sound and the `EN → RU` hint near the caret |
 | `Sources/main.swift` | Menu bar UI, permissions, launch at login |

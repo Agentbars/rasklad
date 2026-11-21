@@ -19,6 +19,11 @@ final class KeyMonitor {
 
     var isRunning: Bool { tap != nil }
 
+    /// Set while an excluded app is frontmost: keys are neither buffered nor checked for the hotkey.
+    var paused = false {
+        didSet { if paused { reset(); lastShiftTapAt = 0; shiftClean = false } }
+    }
+
     init() {
         DistributedNotificationCenter.default().addObserver(
             forName: NSNotification.Name(kTISNotifySelectedKeyboardInputSourceChanged as String),
@@ -81,7 +86,7 @@ final class KeyMonitor {
             return
         default: break
         }
-        if event.getIntegerValueField(.eventSourceUserData) == TextOutput.marker { return }
+        if paused || event.getIntegerValueField(.eventSourceUserData) == TextOutput.marker { return }
 
         switch type {
         case .keyDown:
