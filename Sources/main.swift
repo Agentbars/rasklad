@@ -4,6 +4,7 @@ import ServiceManagement
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let monitor = KeyMonitor()
+    private var phrase = PhraseTracker()
     private var statusItem: NSStatusItem!
     private var retryTimer: Timer?
     private var enabled = UserDefaults.standard.object(forKey: "enabled") as? Bool ?? true {
@@ -60,12 +61,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let layouts = Layouts.enabled()
         guard layouts.count >= 2 else { NSSound.beep(); return }
 
-        guard let range = Converter.lastWord(in: monitor.buffer) else {
+        guard let step = Converter.nextStep(in: monitor.buffer, extending: phrase.previous(for: monitor.buffer)) else {
+            phrase.reset()
             convertSelection(layouts: layouts)
             return
         }
-        guard let target = Layouts.next(after: monitor.layoutID(at: range.upperBound - 1) ?? Layouts.currentID(),
-                                        in: layouts) else { return }
+        let spanLayout = monitor.layoutID(at: step.span.upperBound - 1) ?? Layouts.currentID()
+        let target = step.kind == .extend
+            ? layouts.first { $0.id == spanLayout }
+            : Layouts.next(after: spanLayout, in: layouts)
+        guard let target else { return }
+        let range = step.convert
         let word = monitor.buffer[range]
         let trailing = monitor.buffer[range.upperBound...]
         let newWord = Converter.retype(word, in: target)
@@ -74,6 +80,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         TextOutput.backspace(toDelete)
         TextOutput.type(newWord.joined() + trailing.map(\.produced).joined())
         monitor.replace(range, with: newWord, layoutID: target.id)
+        phrase.record(step.span, buffer: monitor.buffer)
         Layouts.select(target)
     }
 

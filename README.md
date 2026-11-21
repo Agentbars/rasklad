@@ -9,7 +9,10 @@ Typed `ghbdtn` instead of `привет`? Double-tap **Shift** and it's fixed.
 
 - **Last word.** Double-tap Shift right after typing: the last word is erased, re-typed as if
   the same keys were pressed in the other layout, and the input source is switched.
-  Double-tap again to switch it back.
+- **Phrase.** Double-tap again right away (no typing, click, arrow or app switch in between)
+  to also convert the word before it; each further double tap adds one more word, back to the
+  start of what was typed. Spaces stay as typed. Once there is nothing more to add, the next
+  double tap switches the whole converted phrase back, so you can always undo.
 - **Selection.** Select text (mouse or Shift+arrows), then double-tap Shift: the selection is
   converted. The clipboard is restored afterwards.
 - Works with any layouts enabled in System Settings (ABC, Russian, ...). With more than two,
@@ -69,7 +72,7 @@ Newly granted permissions are picked up only after Rasklad is relaunched.
 | File | What it does |
 | --- | --- |
 | `Sources/Layouts.swift` | Enabled layouts, key → character via `UCKeyTranslate`, reverse maps |
-| `Sources/Converter.swift` | Last-word detection and text conversion (pure logic) |
+| `Sources/Converter.swift` | Last-word and phrase-span selection, text conversion (pure logic) |
 | `Sources/KeyMonitor.swift` | Listen-only event tap, typed-keys buffer, double-Shift detection |
 | `Sources/TextOutput.swift` | Synthetic backspaces and Unicode typing |
 | `Sources/main.swift` | Menu bar UI, permissions, launch at login |
