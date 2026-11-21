@@ -61,12 +61,21 @@ check(run(.rightOption, [(61, true, 0), (61, false, 0.1)], cancelAt: 0.05) == 0,
 check(run(.rightOption, [(58, true, 0), (61, true, 0.02), (61, false, 0.06), (58, false, 0.1)]) == 0, true,
       "right Option with left Option held")
 
+// Double Command
+check(run(.doubleCommand, double(55)) == 1, true, "double left Command")
+check(run(.doubleCommand, double(54)) == 1, true, "double right Command")
+check(run(.doubleCommand, double(55), deviceBits: false) == 1, true, "double Command, generic mask only")
+check(run(.doubleCommand, [(55, true, 0), (55, false, 0.1), (55, true, 0.3), (55, false, 0.4)], cancelAt: 0.35) == 0,
+      true, "Command + key (⌘C) after a tap")
+check(run(.doubleShift, double(55)) == 0, true, "double Command doesn't fire double Shift")
+
 // Case hotkey: default, off, conflicts with the layout hotkey
-check(CaseHotkey.resolve(stored: nil, layout: .doubleShift) == .doubleOption, true, "case: default double Option")
+check(CaseHotkey.resolve(stored: nil, layout: .doubleShift) == .doubleCommand, true, "case: default double Command")
+check(CaseHotkey.resolve(stored: nil, layout: .doubleCommand) == nil, true, "case: default yields to layout double Command")
 check(CaseHotkey.resolve(stored: "off", layout: .doubleShift) == nil, true, "case: off")
 check(CaseHotkey.resolve(stored: "doubleControl", layout: .doubleShift) == .doubleControl, true, "case: stored choice")
-check(CaseHotkey.resolve(stored: nil, layout: .doubleOption) == nil, true, "case: default yields to layout double Option")
-check(CaseHotkey.resolve(stored: nil, layout: .rightOption) == nil, true, "case: right Option conflicts with double Option")
+check(CaseHotkey.resolve(stored: nil, layout: .doubleOption) == .doubleCommand, true, "case: default kept with layout double Option")
+check(CaseHotkey.resolve(stored: "doubleOption", layout: .rightOption) == nil, true, "case: right Option conflicts with double Option")
 check(CaseHotkey.resolve(stored: "doubleShift", layout: .doubleShift) == nil, true, "case: same hotkey as layout")
 check(CaseHotkey.resolve(stored: "garbage", layout: .doubleShift) == nil, true, "case: unknown value is off")
 check(Hotkey.doubleShift.conflicts(with: .doubleOption), false, "conflict: Shift vs Option")

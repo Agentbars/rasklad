@@ -7,7 +7,7 @@ import Carbon
 //
 //   drive type ghbdtn          type text using the ABC layout's key codes
 //   drive shift2               double-tap Shift
-//   drive tap <hotkey>         doubleShift | doubleOption | doubleControl | rightOption
+//   drive tap <hotkey>         doubleShift | doubleOption | doubleControl | doubleCommand | rightOption
 //   drive key <code>           press one key by virtual key code
 //   drive select-word          Option+Shift+Left: select the previous word
 //   drive click <x> <y>        left click at a global display point (top-left origin)
@@ -67,6 +67,7 @@ case "tap":
     case "doubleShift": tapModifier(56, .maskShift, times: 2)
     case "doubleOption": tapModifier(58, .maskAlternate, times: 2)
     case "doubleControl": tapModifier(59, .maskControl, times: 2)
+    case "doubleCommand": tapModifier(55, .maskCommand, times: 2)
     case "rightOption": tapModifier(61, .maskAlternate, times: 1)
     default: print("unknown hotkey"); exit(2)
     }

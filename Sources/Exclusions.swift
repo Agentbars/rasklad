@@ -66,15 +66,30 @@ final class Exclusions: NSObject {
             let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
             self?.activated(app)
         }
-        activated(NSWorkspace.shared.frontmostApplication)
-        // Created before the app's run loop starts, NSWorkspace may still report a stale
-        // frontmost app (seen: loginwindow). If the real one is excluded and stays in front,
-        // no activation notification would ever correct it, so look again once running.
+        activated(Self.currentFrontApp())
+        // At launch NSWorkspace may report a stale frontmost app (seen: loginwindow, even a
+        // second later). If the real one is excluded and stays in front, no activation
+        // notification would ever correct it, so look again once running.
         for delay in [0.0, 1.0] {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.activated(NSWorkspace.shared.frontmostApplication)
+                self?.activated(Self.currentFrontApp())
             }
         }
+    }
+
+    /// The app with keyboard focus, asked through Accessibility (fresh even at launch);
+    /// NSWorkspace's frontmost app as a fallback.
+    private static func currentFrontApp() -> NSRunningApplication? {
+        var value: CFTypeRef?
+        var pid: pid_t = 0
+        if AXUIElementCopyAttributeValue(AXUIElementCreateSystemWide(), kAXFocusedApplicationAttribute as CFString,
+                                         &value) == .success, let value,
+           CFGetTypeID(value) == AXUIElementGetTypeID(),
+           AXUIElementGetPid(value as! AXUIElement, &pid) == .success,
+           let app = NSRunningApplication(processIdentifier: pid) {
+            return app
+        }
+        return NSWorkspace.shared.frontmostApplication
     }
 
     private func activated(_ app: NSRunningApplication?) {

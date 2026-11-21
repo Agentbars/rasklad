@@ -51,7 +51,7 @@ enum Modifier: CaseIterable {
 
 /// The trigger the user picked in the menu. Saved in UserDefaults under `hotkey`.
 enum Hotkey: String, CaseIterable {
-    case doubleShift, doubleOption, doubleControl, rightOption
+    case doubleShift, doubleOption, doubleControl, doubleCommand, rightOption
 
     static let defaultsKey = "hotkey"
 
@@ -66,6 +66,7 @@ enum Hotkey: String, CaseIterable {
         case .doubleShift: return "Двойной Shift"
         case .doubleOption: return "Двойной Option"
         case .doubleControl: return "Двойной Control"
+        case .doubleCommand: return "Двойной Command"
         case .rightOption: return "Правый Option"
         }
     }
@@ -75,6 +76,7 @@ enum Hotkey: String, CaseIterable {
         case .doubleShift: return .shift
         case .doubleOption, .rightOption: return .option
         case .doubleControl: return .control
+        case .doubleCommand: return .command
         }
     }
 
@@ -151,11 +153,12 @@ extension Hotkey {
 }
 
 /// The second action, case inversion. Saved in UserDefaults under `caseHotkey`
-/// as a Hotkey raw value or "off"; double Option by default.
+/// as a Hotkey raw value or "off"; double Command by default (double Option is often taken,
+/// e.g. by the ChatGPT app's launcher).
 enum CaseHotkey {
     static let defaultsKey = "caseHotkey"
     static let off = "off"
-    static let defaultValue: Hotkey = .doubleOption
+    static let defaultValue: Hotkey = .doubleCommand
 
     /// Effective hotkey: nil when switched off or when it conflicts with the layout
     /// hotkey (the layout hotkey wins, e.g. for users who picked double Option for it).

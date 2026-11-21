@@ -222,7 +222,7 @@ scenario_hotkeys() {
   launch_rasklad
   local option_free=1
   option_is_free || option_free=0
-  for hk in doubleOption doubleControl rightOption; do
+  for hk in doubleOption doubleControl doubleCommand rightOption; do
     if [[ $hk == doubleOption ]] && (( ! option_free )); then
       skip "Хоткей $hk" "двойной Option перехватывает другое приложение$(pgrep -fl bare-modifier-monitor >/dev/null && echo ' (запущен bare-modifier-monitor из ChatGPT.app)'): нажатия после него не доходят до окна"
       continue
@@ -244,6 +244,40 @@ scenario_hotkeys() {
   check "Хоткей doubleShift" "\`ghbdtn\` + двойной Control (не выбран)" "ghbdtn" "$(text)"
   "$DRIVE" shift2; wait_ui
   check "Хоткей doubleShift" "затем двойной Shift" "привет" "$(text)"
+}
+
+scenario_case() {
+  # 6. Case inversion on its own hotkey (double Command by default); layout is not switched.
+  launch_rasklad
+  prepare
+  "$DRIVE" type "ghbdtn"; wait_ui 0.3
+  "$DRIVE" tap doubleCommand; wait_ui
+  check "Регистр" "\`ghbdtn\` + двойной Command" "GHBDTN" "$(text)"
+  check "Регистр" "раскладка не переключилась" "EN" "$(layout_name "$("$DRIVE" layout)")"
+  "$DRIVE" tap doubleCommand; wait_ui
+  check "Регистр" "повторный двойной Command возвращает" "ghbdtn" "$(text)"
+
+  prepare
+  "$DRIVE" type "Ghbdtn"; wait_ui 0.3
+  "$DRIVE" tap doubleCommand; wait_ui
+  check "Регистр" "\`Ghbdtn\` + двойной Command" "gHBDTN" "$(text)"
+  "$DRIVE" shift2; wait_ui
+  check "Регистр" "затем двойной Shift (раскладка)" "пРИВЕТ" "$(text)"
+
+  prepare
+  "$DRIVE" clip-set "e2e-clipboard-sentinel"
+  "$DRIVE" type "hello world"; wait_ui 0.3
+  "$DRIVE" select-word; wait_ui 0.3
+  "$DRIVE" tap doubleCommand; wait_ui 1.5
+  check "Регистр" "выделение \`world\` + двойной Command" "hello WORLD" "$(text)"
+  check "Регистр" "буфер обмена восстановлен" "e2e-clipboard-sentinel" "$("$DRIVE" clip-get)"
+
+  launch_rasklad "caseHotkey off"
+  prepare
+  "$DRIVE" type "ghbdtn"; wait_ui 0.3
+  "$DRIVE" tap doubleCommand; wait_ui
+  check "Регистр" "выключен: \`ghbdtn\` + двойной Command" "ghbdtn" "$(text)"
+  launch_rasklad
 }
 
 scenario_exclusions() {
@@ -271,7 +305,7 @@ scenario_secure() {
   "$DRIVE" host focus-text
 }
 
-SCENARIOS=(basic continue resets selection hotkeys exclusions secure)
+SCENARIOS=(basic continue resets selection hotkeys case exclusions secure)
 (( $# )) && SCENARIOS=("$@")
 for s in $SCENARIOS; do "scenario_$s"; done
 

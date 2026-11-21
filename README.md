@@ -17,10 +17,10 @@ Typed `ghbdtn vbh` instead of `привет мир`? Double-tap **Shift** (or an
   conversion, the next double tap converts only what you typed after it.
 - **Selection.** Select text (mouse or Shift+arrows), then double-tap Shift: the selection is
   converted. The clipboard is restored afterwards.
-- **Case.** Double-tap **Option** to invert the case of the same text: `пРИВЕТ` → `Привет`,
+- **Case.** Double-tap **Command** to invert the case of the same text: `пРИВЕТ` → `Привет`,
   `hello` → `HELLO`. It works like the layout fix: the text typed since the last reset (or the
   selection, with the clipboard restored) is re-typed, the layout is not switched, double-tap again
-  to switch back. You can mix both: `Ghbdtn` → double Option → `gHBDTN` → double Shift → `пРИВЕТ`.
+  to switch back. You can mix both: `Ghbdtn` → double Command → `gHBDTN` → double Shift → `пРИВЕТ`.
   Letters with no single-letter counterpart (`ß`) and non-letters stay as they are.
 - **Caps Lock** doesn't need to be turned off. Text typed with Caps Lock on is remembered as it
   appeared (upper case); after a case inversion each letter is remembered as typed with or without
@@ -41,13 +41,14 @@ Typed `ghbdtn vbh` instead of `привет мир`? Double-tap **Shift** (or an
 ### Hotkey
 
 Pick the layout trigger in the menu bar menu → **Горячая клавиша** and the case trigger in
-**Смена регистра** (same options plus «Выключено»; default: Двойной Option):
+**Смена регистра** (same options plus «Выключено»; default: Двойной Command):
 
 | Option | Trigger |
 | --- | --- |
 | Двойной Shift (default) | double tap of either Shift |
 | Двойной Option | double tap of either Option |
 | Двойной Control | double tap of either Control |
+| Двойной Command (default for case) | double tap of either Command; ⌘C and other shortcuts don't count |
 | Правый Option | single tap of the right Option alone |
 
 A tap counts only when it is clean (no other key, click or modifier in between), short
@@ -55,11 +56,11 @@ A tap counts only when it is clean (no other key, click or modifier in between),
 (`defaults read local.rasklad hotkey`, `defaults read local.rasklad caseHotkey`).
 
 The two actions can't share a modifier key: in each submenu the options on the modifier the
-other action uses are greyed out and marked «занято», so to move the layout fix to Option, first
+other action uses are greyed out and marked «занято», so to move the layout fix to Command, first
 pick another key (or «Выключено») for the case. Double Option and right Option count as the same
-key. If the saved choices clash anyway (e.g. you used double Option for the layout before the
-case action existed), the layout fix wins and the case action is off until you pick a free key. macOS can use double Control for Dictation; if both
-fire, change one of them. Key combos such as ⌥Space are not offered: Rasklad only listens to the
+key. If the saved choices clash anyway, the layout fix wins and the case action is off until you
+pick a free key. Other apps may own a double tap too: macOS can use double Control for Dictation,
+the ChatGPT app's launcher takes double Option. If both fire, change one of them. Key combos such as ⌥Space are not offered: Rasklad only listens to the
 keyboard, so the Space would still reach the app and type a character.
 
 Typed keys are remembered only since the last click, arrow key, Return or shortcut, and only
