@@ -133,6 +133,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if !monitor.isRunning {
             menu.addItem(item("Дать доступ: Мониторинг ввода…", #selector(openInputMonitoring)))
         }
+        if !hasAccessibility || !monitor.isRunning {
+            // macOS reports newly granted permissions to a running app only after a relaunch.
+            menu.addItem(item("Перезапустить Rasklad (после выдачи доступа)", #selector(relaunch)))
+        }
         if hasAccessibility && monitor.isRunning {
             let info = NSMenuItem(title: "Двойной Shift — исправить раскладку", action: nil, keyEquivalent: "")
             info.isEnabled = false
@@ -162,6 +166,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func openInputMonitoring() { openPrivacySettings("Privacy_ListenEvent") }
     @objc private func toggleEnabled() { enabled.toggle(); monitor.reset() }
     @objc private func quit() { NSApp.terminate(nil) }
+
+    @objc private func relaunch() {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/sh")
+        task.arguments = ["-c", "sleep 0.5; /usr/bin/open \"$0\"", Bundle.main.bundlePath]
+        try? task.run()
+        NSApp.terminate(nil)
+    }
 
     @objc private func toggleLogin() {
         do {

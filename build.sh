@@ -12,8 +12,15 @@ swiftc -O -swift-version 5 -target arm64-apple-macos13.0 \
   -framework Cocoa -framework Carbon -framework ServiceManagement \
   Sources/*.swift -o "$APP/Contents/MacOS/Rasklad"
 
-# Ad-hoc signature: macOS asks for permissions again after each rebuild.
-codesign --force --sign - "$APP"
+# Sign with the local certificate from scripts/make-signing-cert.sh if it exists:
+# then macOS keeps permissions across rebuilds. Otherwise ad-hoc (permissions reset each build).
+IDENTITY="Rasklad Local Signing"
+if security find-identity -p codesigning | grep -q "\"$IDENTITY\""; then
+  codesign --force --sign "$IDENTITY" "$APP"
+else
+  echo "warning: \"$IDENTITY\" not found, signing ad-hoc. Run scripts/make-signing-cert.sh once."
+  codesign --force --sign - "$APP"
+fi
 echo "Built $APP"
 
 if [[ "${1:-}" == "install" ]]; then

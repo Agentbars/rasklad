@@ -29,8 +29,15 @@ Requires macOS 13+ and Xcode (or the Command Line Tools).
 
 This builds `build/Rasklad.app`, copies it to `~/Applications` and launches it.
 On first launch grant **Accessibility** and **Input Monitoring** in
-System Settings → Privacy & Security. The app is ad-hoc signed, so macOS asks again after
-every rebuild.
+System Settings → Privacy & Security, then relaunch Rasklad.
+
+To keep those permissions across rebuilds, create a local signing certificate once:
+
+```bash
+scripts/make-signing-cert.sh
+```
+
+Without it the app is signed ad-hoc and macOS asks for permissions again after every rebuild.
 
 ## Tests
 
