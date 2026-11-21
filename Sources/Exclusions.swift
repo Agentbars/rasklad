@@ -67,6 +67,14 @@ final class Exclusions: NSObject {
             self?.activated(app)
         }
         activated(NSWorkspace.shared.frontmostApplication)
+        // Created before the app's run loop starts, NSWorkspace may still report a stale
+        // frontmost app (seen: loginwindow). If the real one is excluded and stays in front,
+        // no activation notification would ever correct it, so look again once running.
+        for delay in [0.0, 1.0] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.activated(NSWorkspace.shared.frontmostApplication)
+            }
+        }
     }
 
     private func activated(_ app: NSRunningApplication?) {
@@ -78,6 +86,7 @@ final class Exclusions: NSObject {
 
     private func update() {
         isFrontExcluded = list.isExcluded(frontApp?.bundleIdentifier)
+        log.debug("exclusions: front=\(self.frontApp?.bundleIdentifier ?? "nil", privacy: .public) excluded=\(self.isFrontExcluded)")
         onChange?(isFrontExcluded)
     }
 
