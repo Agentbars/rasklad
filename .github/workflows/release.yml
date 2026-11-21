@@ -19,9 +19,30 @@ jobs:
       - name: Enable the Russian layout for the conversion tests
         run: swift scripts/enable-layouts.swift
 
+      - name: Import the release signing certificate into a temporary keychain
+        env:
+          P12_BASE64: ${{ secrets.RELEASE_SIGNING_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.RELEASE_SIGNING_P12_PASSWORD }}
+        run: |
+          # Every release is signed with the same self-signed "Rasklad Release Signing" certificate,
+          # so the designated requirement stays the same and macOS keeps the Accessibility and
+          # Input Monitoring permissions across updates.
+          KEYCHAIN="$RUNNER_TEMP/release.keychain-db"
+          KEYCHAIN_PASSWORD=$(openssl rand -hex 16)
+          echo "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/release.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/release.p12" -k "$KEYCHAIN" -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          rm "$RUNNER_TEMP/release.p12"
+          security find-identity -p codesigning "$KEYCHAIN"
+
       - name: Build and test
         run: |
-          VERSION="${GITHUB_REF_NAME#v}" ./build.sh
+          VERSION="${GITHUB_REF_NAME#v}" SIGN_IDENTITY="Rasklad Release Signing" ./build.sh
+          codesign -d -r- build/Rasklad.app
           ./scripts/test.sh
 
       - name: Package
@@ -30,12 +51,25 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent Rasklad.app "Rasklad-${GITHUB_REF_NAME}.zip"
           shasum -a 256 "Rasklad-${GITHUB_REF_NAME}.zip" > "Rasklad-${GITHUB_REF_NAME}.zip.sha256"
 
+      - name: Sparkle appcast (EdDSA-signed)
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        run: |
+          KEY="$RUNNER_TEMP/sparkle_ed_key"
+          printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > "$KEY"
+          scripts/make-appcast.sh "${GITHUB_REF_NAME#v}" "build/Rasklad-${GITHUB_REF_NAME}.zip" "$KEY" > build/appcast.xml
+          rm "$KEY"
+          cat build/appcast.xml
+
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           cat > notes.md <<NOTES
           Universal build (Apple Silicon + Intel), macOS 13 or later.
+
+          **Install:** \`brew install --cask agentbars/tap/rasklad\` or download the zip below.
+          Rasklad updates itself (menu → «Проверить обновления…»).
 
           **First launch:** the app is not notarized by Apple, so macOS blocks it the first time.
           Unzip, move \`Rasklad.app\` to Applications, open it once, then go to
@@ -45,4 +79,9 @@ jobs:
           NOTES
           gh release create "$GITHUB_REF_NAME" \
             "build/Rasklad-${GITHUB_REF_NAME}.zip" "build/Rasklad-${GITHUB_REF_NAME}.zip.sha256" \
+            build/appcast.xml \
             --title "Rasklad ${GITHUB_REF_NAME}" --notes-file notes.md --generate-notes
+
+      - name: Remove the temporary keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/release.keychain-db" || true

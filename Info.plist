@@ -24,6 +24,12 @@
     <string>13.0</string>
     <key>LSUIElement</key>
     <true/>
+    <key>SUFeedURL</key>
+    <string>https://github.com/Agentbars/rasklad/releases/latest/download/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>vNsz6oPNTxjHwL2DY7JOg67Zhql2Ho27/XgeB2N5NGg=</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
     <key>NSHumanReadableCopyright</key>
     <string>Personal build</string>
 </dict>

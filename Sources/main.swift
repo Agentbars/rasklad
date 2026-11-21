@@ -30,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         requestPermissions()
         startMonitor()
+        Updates.start()
     }
 
     // MARK: - Permissions
@@ -220,6 +221,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Feedback.menuItems().forEach(menu.addItem)
 
         menu.addItem(.separator())
+        menu.addItem(Updates.menuItem())
         menu.addItem(item("Выйти", #selector(quit), key: "q"))
     }
 
