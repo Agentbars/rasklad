@@ -32,47 +32,47 @@ check(Converter.convertText("ghbdtn vbh", layouts: [abc, ru])?.text ?? "nil", "�
 check(Converter.convertText("Руддщ цщкдв!", layouts: [abc, ru])?.text ?? "nil", "Hello world!", "text ru->en")
 check(Converter.convertText("123", layouts: [abc, ru])?.text ?? "nil", "nil", "no letters")
 
-// Phrase extension: repeated double Shift, simulated like AppDelegate.convert() does it
-func press(_ buffer: inout [TypedKey], _ layoutIDs: inout [String], _ tracker: inout PhraseTracker,
-           _ screen: inout String) {
-    guard let step = Converter.nextStep(in: buffer, extending: tracker.previous(for: buffer)) else { return }
-    let spanLayout = layoutIDs[step.span.upperBound - 1]
-    let target = step.kind == .extend ? layouts.first { $0.id == spanLayout }!
-                                      : Layouts.next(after: spanLayout, in: [abc, ru])!
-    let newWord = Converter.retype(buffer[step.convert], in: target)
-    let toDelete = buffer[step.convert.lowerBound...].reduce(0) { $0 + $1.produced.count }
-    screen.removeLast(toDelete)
-    screen += newWord.joined() + buffer[step.convert.upperBound...].map(\.produced).joined()
-    for (i, s) in zip(step.convert, newWord) { buffer[i].produced = s; layoutIDs[i] = target.id }
-    tracker.record(step.span, buffer: buffer)
+// Typing run: double Shift converts everything typed since the last reset, simulated
+// like AppDelegate.convert() does it.
+func press(_ buffer: inout [TypedKey], _ ids: inout [String], _ run: inout TypingRun, _ screen: inout String) {
+    guard let range = run.range(in: buffer) else { return }
+    let target = Layouts.next(after: ids[range.upperBound - 1], in: [abc, ru])!
+    let newText = Converter.retype(buffer[range], in: target)
+    screen.removeLast(buffer[range].reduce(0) { $0 + $1.produced.count })
+    screen += newText.joined()
+    for (i, s) in zip(range, newText) { buffer[i].produced = s; ids[i] = target.id }
+    run.didConvert()
+}
+func type(_ text: String, in layout: KeyboardLayout, _ buffer: inout [TypedKey], _ ids: inout [String],
+          _ run: inout TypingRun, _ screen: inout String) {
+    for k in keys(text, in: layout) { run.willType(at: buffer.count); buffer.append(k); ids.append(layout.id) }
+    screen += text
 }
 do {
-    var buffer = keys("ghbdtn  vbh ", in: abc)
-    var ids = Array(repeating: abc.id, count: buffer.count)
-    var tracker = PhraseTracker()
-    var screen = "ghbdtn  vbh "
-    press(&buffer, &ids, &tracker, &screen); check(screen, "ghbdtn  мир ", "phrase 1st press")
-    press(&buffer, &ids, &tracker, &screen); check(screen, "привет  мир ", "phrase 2nd press extends")
-    check(buffer.map(\.produced).joined(), screen, "phrase buffer matches screen")
-    press(&buffer, &ids, &tracker, &screen); check(screen, "ghbdtn  vbh ", "phrase 3rd press toggles back")
-    press(&buffer, &ids, &tracker, &screen); check(screen, "привет  мир ", "phrase 4th press toggles again")
+    var buffer: [TypedKey] = [], ids: [String] = [], run = TypingRun(), screen = ""
+    type("ghbdtn vbh rfr ltkf", in: abc, &buffer, &ids, &run, &screen)
+    press(&buffer, &ids, &run, &screen); check(screen, "привет мир как дела", "run: whole phrase at once")
+    check(buffer.map(\.produced).joined(), screen, "run: buffer matches screen")
+    press(&buffer, &ids, &run, &screen); check(screen, "ghbdtn vbh rfr ltkf", "run: second press toggles back")
+    press(&buffer, &ids, &run, &screen); check(screen, "привет мир как дела", "run: third press toggles again")
 
-    // Typing in between starts over from the last word
-    buffer += keys("ntcn", in: abc); ids += Array(repeating: abc.id, count: 4); screen += "ntcn"
-    press(&buffer, &ids, &tracker, &screen); check(screen, "привет  мир тест", "phrase reset by typing")
-
-    // One word only: second press toggles it back, like before
-    var b2 = keys("ghbdtn", in: abc), ids2 = Array(repeating: abc.id, count: 6)
-    var t2 = PhraseTracker(), s2 = "ghbdtn"
-    press(&b2, &ids2, &t2, &s2); check(s2, "привет", "single word 1st")
-    press(&b2, &ids2, &t2, &s2); check(s2, "ghbdtn", "single word toggles back")
+    // Typing after a conversion starts a new run: only the new text is converted
+    type(" тест", in: ru, &buffer, &ids, &run, &screen)
+    press(&buffer, &ids, &run, &screen); check(screen, "привет мир как дела ntcn", "run: only text typed after the conversion")
 }
-check(Converter.nextStep(in: keys("ab cd", in: abc), extending: 3..<5)?.kind == .extend ? "extend" : "other",
-      "extend", "step kind extend")
-check(Converter.nextStep(in: keys("  cd", in: abc), extending: 2..<4)?.kind == .toggle ? "toggle" : "other",
-      "toggle", "step kind toggle at buffer start")
-check(Converter.nextStep(in: keys("ab", in: abc), extending: 0..<9)?.span == 0..<2 ? "word" : "other",
-      "word", "stale span falls back to last word")
+do {
+    // Only spaces or nothing: no run (falls back to the selection)
+    var buffer = keys("   ", in: abc)
+    check(TypingRun().range(in: buffer) == nil ? "nil" : "range", "nil", "run: spaces only")
+    buffer = []
+    check(TypingRun().range(in: buffer) == nil ? "nil" : "range", "nil", "run: empty")
+    // Backspace past the run start and dropping old keys keep the start valid
+    var r = TypingRun()
+    r.didConvert(); r.willType(at: 5)
+    r.didShrink(to: 3); check("\(r.start)", "3", "run: shrink clamps start")
+    r.didDropFirst(10); check("\(r.start)", "0", "run: drop clamps start")
+}
+
 // Per-app exclusions
 func yes(_ b: Bool) -> String { b ? "yes" : "no" }
 var ex = ExclusionList()

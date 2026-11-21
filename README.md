@@ -3,18 +3,18 @@
 <h1 align="center">Rasklad</h1>
 
 A tiny macOS menu bar app that fixes text typed in the wrong keyboard layout.
-Typed `ghbdtn` instead of `привет`? Double-tap **Shift** (or another hotkey you pick) and it's fixed.
+Typed `ghbdtn vbh` instead of `привет мир`? Double-tap **Shift** (or another hotkey you pick) and it's fixed.
 
 Маленькое приложение для macOS: исправляет текст, набранный не в той раскладке, по двойному нажатию Shift.
 
 ## How it works
 
-- **Last word.** Double-tap Shift right after typing: the last word is erased, re-typed as if
-  the same keys were pressed in the other layout, and the input source is switched.
-- **Phrase.** Double-tap again right away (no typing, click, arrow or app switch in between)
-  to also convert the word before it; each further double tap adds one more word, back to the
-  start of what was typed. Spaces stay as typed. Once there is nothing more to add, the next
-  double tap switches the whole converted phrase back, so you can always undo.
+- **Everything you just typed.** Double-tap Shift: all text typed since you last pressed Return,
+  clicked, moved the caret, used a shortcut, switched apps or switched the layout by hand is
+  erased, re-typed as if the same keys were pressed in the other layout, and the input source is
+  switched. Spaces stay as typed.
+- **Undo.** Double-tap again right away to switch that text back. If you keep typing after a
+  conversion, the next double tap converts only what you typed after it.
 - **Selection.** Select text (mouse or Shift+arrows), then double-tap Shift: the selection is
   converted. The clipboard is restored afterwards.
 - Works with any layouts enabled in System Settings (ABC, Russian, ...). With more than two,
@@ -115,7 +115,7 @@ Newly granted permissions are picked up only after Rasklad is relaunched.
 | File | What it does |
 | --- | --- |
 | `Sources/Layouts.swift` | Enabled layouts, key → character via `UCKeyTranslate`, reverse maps |
-| `Sources/Converter.swift` | Last-word and phrase-span selection, text conversion (pure logic) |
+| `Sources/Converter.swift` | Typing run (what the hotkey converts), text conversion (pure logic) |
 | `Sources/KeyMonitor.swift` | Listen-only event tap, typed-keys buffer |
 | `Sources/Hotkey.swift` | Hotkey choice, modifier tap / double-tap detection, its submenu |
 | `Sources/Exclusions.swift` | Per-app exclusions: list (pure logic), storage, frontmost app, menu items |

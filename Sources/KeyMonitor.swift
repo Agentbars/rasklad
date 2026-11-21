@@ -9,6 +9,9 @@ final class KeyMonitor {
     private(set) var bufferLayouts: [String] = [] // layout id each key was typed in
     private var tap: CFMachPort?
     private var currentLayoutID: String? = Layouts.currentID()
+    private var typingRun = TypingRun()
+    /// Layout Rasklad itself is switching to; that switch must not clear the buffer.
+    private var ownSwitchTarget: String?
 
     private var tapDetector = TapDetector()
     var hotkey: Hotkey {
@@ -27,7 +30,7 @@ final class KeyMonitor {
         DistributedNotificationCenter.default().addObserver(
             forName: NSNotification.Name(kTISNotifySelectedKeyboardInputSourceChanged as String),
             object: nil, queue: .main
-        ) { [weak self] _ in self?.currentLayoutID = Layouts.currentID() }
+        ) { [weak self] _ in self?.layoutChanged() }
     }
 
     @discardableResult
@@ -61,6 +64,28 @@ final class KeyMonitor {
     func reset() {
         buffer.removeAll()
         bufferLayouts.removeAll()
+        typingRun.reset()
+    }
+
+    /// What the hotkey converts now: the typing run (see `TypingRun`).
+    var run: Range<Int>? { typingRun.range(in: buffer) }
+
+    /// Call after converting `run` and before switching the layout to `layoutID`.
+    func didConvert(switchingTo layoutID: String) {
+        typingRun.didConvert()
+        ownSwitchTarget = layoutID
+    }
+
+    /// A manual layout switch starts a new run; Rasklad's own switch after a conversion does not.
+    private func layoutChanged() {
+        currentLayoutID = Layouts.currentID()
+        if let own = ownSwitchTarget, own == currentLayoutID {
+            ownSwitchTarget = nil
+            return
+        }
+        ownSwitchTarget = nil
+        if !buffer.isEmpty { log.debug("layout switched by hand: buffer cleared") }
+        reset()
     }
 
     /// Records the result of a conversion so the next press converts it again.
@@ -113,6 +138,7 @@ final class KeyMonitor {
             if flags.contains(.maskAlternate) || buffer.isEmpty { reset() } else {
                 buffer.removeLast()
                 bufferLayouts.removeLast()
+                typingRun.didShrink(to: buffer.count)
             }
             return
         }
@@ -131,12 +157,14 @@ final class KeyMonitor {
                                shift: flags.contains(.maskShift),
                                option: flags.contains(.maskAlternate),
                                capsLock: flags.contains(.maskAlphaShift))
+        typingRun.willType(at: buffer.count)
         buffer.append(TypedKey(stroke: stroke, produced: produced))
         log.debug("key: buffered, buffer=\(self.buffer.count)")
         bufferLayouts.append(currentLayoutID ?? "")
-        if buffer.count > 300 {
-            buffer.removeFirst(100)
-            bufferLayouts.removeFirst(100)
+        if buffer.count > 2000 {
+            buffer.removeFirst(500)
+            bufferLayouts.removeFirst(500)
+            typingRun.didDropFirst(500)
         }
     }
 

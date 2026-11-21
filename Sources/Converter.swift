@@ -26,31 +26,6 @@ enum Converter {
         keys.map { isSpace($0.produced) ? $0.produced : (layout.character(for: $0.stroke) ?? $0.produced) }
     }
 
-    /// One double-Shift step over the typed buffer.
-    struct Step: Equatable {
-        enum Kind { case word, extend, toggle }
-        /// Keys to re-type in this step.
-        let convert: Range<Int>
-        /// The whole converted span after this step (what the next press extends).
-        let span: Range<Int>
-        /// `.word` and `.toggle` move to the next layout; `.extend` keeps the span's current layout.
-        let kind: Kind
-    }
-
-    /// Decides what a double Shift converts. `previous` is the span converted by the
-    /// previous press, if nothing was typed since: then the word before it is added to it.
-    /// With no word left before the span, the whole span is toggled to the next layout.
-    static func nextStep(in buffer: [TypedKey], extending previous: Range<Int>?) -> Step? {
-        guard let span = previous, span.upperBound <= buffer.count, !span.isEmpty else {
-            guard let word = lastWord(in: buffer) else { return nil }
-            return Step(convert: word, span: word, kind: .word)
-        }
-        if let word = lastWord(in: Array(buffer[..<span.lowerBound])) {
-            return Step(convert: word, span: word.lowerBound..<span.upperBound, kind: .extend)
-        }
-        return Step(convert: span, span: span, kind: .toggle)
-    }
-
     /// Converts ready-made text (a selection): guesses the layout it was typed in
     /// by its letters and re-types it in the next layout.
     static func convertText(_ text: String, layouts: [KeyboardLayout]) -> (text: String, target: KeyboardLayout)? {
@@ -78,22 +53,39 @@ enum Converter {
     }
 }
 
-/// Remembers the span the last double Shift converted, valid while the buffer stays
-/// exactly as that conversion left it (any typing, click, arrow or app switch changes it).
-struct PhraseTracker {
-    private var span: Range<Int>?
-    private var snapshot: [String] = []
+/// The part of the typed buffer a double Shift converts: everything typed since the
+/// buffer was last cleared (Return, click, arrows, shortcut, app switch, manual layout
+/// switch) or since the last conversion, once typing continues after it.
+/// Pressing the hotkey again right after a conversion converts the same text back.
+struct TypingRun {
+    private(set) var start = 0
+    private var afterConversion = false
 
-    /// The span to extend, or nil if the buffer changed since the last conversion.
-    func previous(for buffer: [TypedKey]) -> Range<Int>? {
-        guard let span, buffer.map(\.produced) == snapshot else { return nil }
-        return span
+    mutating func reset() {
+        start = 0
+        afterConversion = false
     }
 
-    mutating func record(_ span: Range<Int>, buffer: [TypedKey]) {
-        self.span = span
-        snapshot = buffer.map(\.produced)
+    /// Call before a typed key is appended at `index`.
+    mutating func willType(at index: Int) {
+        if afterConversion {
+            start = index
+            afterConversion = false
+        }
     }
 
-    mutating func reset() { span = nil; snapshot = [] }
+    /// Call after keys were removed from the end (backspace); `count` is the new buffer size.
+    mutating func didShrink(to count: Int) { start = min(start, count) }
+
+    /// Call after `n` keys were dropped from the front of the buffer.
+    mutating func didDropFirst(_ n: Int) { start = max(0, start - n) }
+
+    mutating func didConvert() { afterConversion = true }
+
+    /// Range to convert, or nil when the run holds no text (only spaces or nothing).
+    func range(in buffer: [TypedKey]) -> Range<Int>? {
+        let from = min(start, buffer.count)
+        guard buffer[from...].contains(where: { !$0.produced.isEmpty && !Converter.isSpace($0.produced) }) else { return nil }
+        return from..<buffer.count
+    }
 }

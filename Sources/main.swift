@@ -4,7 +4,6 @@ import ServiceManagement
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let monitor = KeyMonitor()
-    private var phrase = PhraseTracker()
     private let exclusions = Exclusions()
     private var statusItem: NSStatusItem!
     private var retryTimer: Timer?
@@ -65,27 +64,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let layouts = Layouts.enabled()
         guard layouts.count >= 2 else { NSSound.beep(); return }
 
-        guard let step = Converter.nextStep(in: monitor.buffer, extending: phrase.previous(for: monitor.buffer)) else {
-            phrase.reset()
+        guard let range = monitor.run else {
             convertSelection(layouts: layouts)
             return
         }
-        let spanLayout = monitor.layoutID(at: step.span.upperBound - 1) ?? Layouts.currentID()
-        let target = step.kind == .extend
-            ? layouts.first { $0.id == spanLayout }
-            : Layouts.next(after: spanLayout, in: layouts)
-        guard let target else { return }
-        let range = step.convert
         let sourceID = monitor.layoutID(at: range.upperBound - 1) ?? Layouts.currentID()
-        let word = monitor.buffer[range]
-        let trailing = monitor.buffer[range.upperBound...]
-        let newWord = Converter.retype(word, in: target)
-        let toDelete = (word + trailing).reduce(0) { $0 + $1.produced.count }
+        guard let target = Layouts.next(after: sourceID, in: layouts) else { return }
+        let keys = monitor.buffer[range]
+        let newText = Converter.retype(keys, in: target)
+        let toDelete = keys.reduce(0) { $0 + $1.produced.count }
 
         TextOutput.backspace(toDelete)
-        TextOutput.type(newWord.joined() + trailing.map(\.produced).joined())
-        monitor.replace(range, with: newWord, layoutID: target.id)
-        phrase.record(step.span, buffer: monitor.buffer)
+        TextOutput.type(newText.joined())
+        monitor.replace(range, with: newText, layoutID: target.id)
+        monitor.didConvert(switchingTo: target.id)
         Layouts.select(target)
         Feedback.show(from: sourceID, to: target, in: layouts)
     }
