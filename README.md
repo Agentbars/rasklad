@@ -49,6 +49,21 @@ keyboard, so the Space would still reach the app and type a character.
 Typed keys are remembered only since the last click, arrow key, Return or shortcut, and only
 in memory. Nothing is stored or sent anywhere.
 
+## Download
+
+Grab `Rasklad-vX.Y.Z.zip` from [Releases](https://github.com/Agentbars/rasklad/releases)
+(universal: Apple Silicon and Intel, macOS 13+). Unzip and move `Rasklad.app` to Applications.
+
+The app is not notarized by Apple, so the first launch is blocked: open it once, then go to
+System Settings → Privacy & Security → **Open Anyway**. Grant **Accessibility** and
+**Input Monitoring** when asked, then relaunch Rasklad from its menu («Перезапустить Rasklad»).
+
+Releases are built by GitHub Actions when a `v*` tag is pushed:
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
 ## Build
 
 Requires macOS 13+ and Xcode (or the Command Line Tools).
@@ -72,16 +87,11 @@ Without it the app is signed ad-hoc and macOS asks for permissions again after e
 ## Tests
 
 ```bash
-swiftc -swift-version 5 -framework Carbon -framework Cocoa Sources/Layouts.swift Sources/Converter.swift Sources/Exclusions.swift Tests/main.swift -o build/tests && ./build/tests
+./scripts/test.sh
 ```
 
-The tests use the layouts enabled on your Mac and expect ABC (or US) and Russian.
-
-Hotkey detection tests (no permissions or layouts needed):
-
-```bash
-swiftc -swift-version 5 -framework Cocoa Sources/Hotkey.swift Tests/Hotkey/main.swift -o build/hotkey-tests && ./build/hotkey-tests
-```
+Runs the conversion tests (they use the layouts enabled on your Mac and expect ABC or US plus
+Russian) and the hotkey detection tests. CI runs the same script on every push and pull request.
 
 ## Troubleshooting
 

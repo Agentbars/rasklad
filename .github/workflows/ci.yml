@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest Xcode (actool needs Xcode 26+ for the .icon app icon)
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)
+          echo "Using $XCODE"
+          sudo xcode-select -s "$XCODE"
+          swift --version
+
+      - name: Build
+        run: ./build.sh
+
+      - name: Enable the Russian layout for the conversion tests
+        run: swift scripts/enable-layouts.swift
+
+      - name: Test
+        run: ./scripts/test.sh

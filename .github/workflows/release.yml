@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest Xcode (actool needs Xcode 26+ for the .icon app icon)
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)"
+
+      - name: Enable the Russian layout for the conversion tests
+        run: swift scripts/enable-layouts.swift
+
+      - name: Build and test
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}" ./build.sh
+          ./scripts/test.sh
+
+      - name: Package
+        run: |
+          cd build
+          ditto -c -k --sequesterRsrc --keepParent Rasklad.app "Rasklad-${GITHUB_REF_NAME}.zip"
+          shasum -a 256 "Rasklad-${GITHUB_REF_NAME}.zip" > "Rasklad-${GITHUB_REF_NAME}.zip.sha256"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > notes.md <<NOTES
+          Universal build (Apple Silicon + Intel), macOS 13 or later.
+
+          **First launch:** the app is not notarized by Apple, so macOS blocks it the first time.
+          Unzip, move \`Rasklad.app\` to Applications, open it once, then go to
+          System Settings → Privacy & Security → **Open Anyway**.
+          Then grant **Accessibility** and **Input Monitoring** when asked and relaunch Rasklad
+          (menu bar → «Перезапустить Rasklad»).
+          NOTES
+          gh release create "$GITHUB_REF_NAME" \
+            "build/Rasklad-${GITHUB_REF_NAME}.zip" "build/Rasklad-${GITHUB_REF_NAME}.zip.sha256" \
+            --title "Rasklad ${GITHUB_REF_NAME}" --notes-file notes.md --generate-notes
