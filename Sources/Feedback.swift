@@ -20,10 +20,11 @@ enum Feedback {
     /// Call after a conversion that actually changed text.
     /// `fromID` is the layout the text was typed in; nil means "the one before `target`".
     static func show(from fromID: String?, to target: KeyboardLayout, in layouts: [KeyboardLayout]) {
-        if soundEnabled { playSound() }
+        if soundEnabled { log.debug("feedback: sound played=\(playSound())") }
         guard hintEnabled else { return }
         let source = layouts.first { $0.id == fromID } ?? previous(before: target, in: layouts)
         let text = "\(source.map(label(for:)) ?? "?") → \(label(for: target))"
+        log.debug("feedback: hint \(text, privacy: .public)")
         // Synthetic keystrokes are delivered asynchronously: let the app move its caret first.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { HintPanel.shared.show(text) }
     }
@@ -58,11 +59,12 @@ enum Feedback {
         return layouts[(i + layouts.count - 1) % layouts.count]
     }
 
-    private static func playSound() {
-        guard let sound = NSSound(named: "Tink") else { return }
+    @discardableResult
+    private static func playSound() -> Bool {
+        guard let sound = NSSound(named: "Tink") else { return false }
         sound.stop() // the named sound is shared: restart it on quick repeated conversions
         sound.volume = 0.5
-        sound.play()
+        return sound.play()
     }
 
     // MARK: - Caret position

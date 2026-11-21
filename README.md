@@ -130,6 +130,30 @@ Without it the app is signed ad-hoc and macOS asks for permissions again after e
 Runs the conversion tests (they use the layouts enabled on your Mac and expect ABC or US plus
 Russian) and the hotkey detection tests. CI runs the same script on every push and pull request.
 
+### End-to-end tests (local only)
+
+```bash
+./scripts/e2e.sh
+```
+
+Builds and installs Rasklad, opens a small test window (`Tests/E2E/Host`, bundle id
+`local.rasklad.e2e-host`) and presses real keys in it with `Tests/Drive`: conversion and undo,
+typing on after a conversion, resets (Return, click, arrows, manual layout switch), selection and
+clipboard restore, every hotkey from the menu, exclusions, feedback (sound and hint, checked in the
+`local.rasklad` log) and a password field. Writes `build/e2e/report.md` with what was typed,
+expected and got for each check plus the Rasklad log of the run; exits non-zero on any failure.
+Pass scenario names to run only some of them: `./scripts/e2e.sh selection hotkeys`
+(all: `basic continue resets selection hotkeys exclusions secure`).
+
+- It takes over the keyboard and mouse for about a minute: don't touch them while it runs.
+- Needs Rasklad's own permissions, ABC (or US) plus Russian layouts, and **Accessibility for the
+  app you run it from** (Terminal, iTerm, ...), so the driver may post key events.
+- Your Rasklad settings, keyboard layout and clipboard are restored at the end.
+- If another app owns double Option (the ChatGPT app's launcher does), keys typed after it go to
+  that app's window, so the double Option check is skipped with a note in the report. The same
+  conflict hits real use: pick another hotkey then.
+- It doesn't run in CI: GitHub runners can't grant Accessibility and Input Monitoring.
+
 ## Troubleshooting
 
 Logs (no typed characters, only event kinds and counts):
@@ -160,6 +184,8 @@ Newly granted permissions are picked up only after Rasklad is relaunched.
 | `Sources/Feedback.swift` | Conversion sound and the `EN → RU` / `Aa` hint near the caret |
 | `Sources/Updates.swift` | Sparkle auto-updates, «Проверить обновления…» menu item |
 | `Sources/main.swift` | Conversion and case actions, selection via clipboard, menu bar UI, permissions, launch at login |
+| `Tests/main.swift`, `Tests/Hotkey` | Unit tests (`scripts/test.sh`) |
+| `Tests/Drive`, `Tests/E2E/Host`, `scripts/e2e.sh` | End-to-end tests: key driver, test window, runner |
 
 ## Icons
 
