@@ -4,6 +4,7 @@ import ServiceManagement
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let monitor = KeyMonitor()
+    private let exclusions = Exclusions()
     private var statusItem: NSStatusItem!
     private var retryTimer: Timer?
     private var enabled = UserDefaults.standard.object(forKey: "enabled") as? Bool ?? true {
@@ -21,6 +22,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
         ) { [weak self] _ in self?.monitor.reset() }
+        exclusions.onChange = { [weak self] excluded in self?.monitor.paused = excluded }
+        monitor.paused = exclusions.isFrontExcluded
 
         requestPermissions()
         startMonitor()
@@ -147,6 +150,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let toggle = item("Включено", #selector(toggleEnabled))
         toggle.state = enabled ? .on : .off
         menu.addItem(toggle)
+        exclusions.menuItems().forEach(menu.addItem)
 
         let login = item("Открывать при входе", #selector(toggleLogin))
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
