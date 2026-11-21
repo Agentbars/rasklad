@@ -1,0 +1,29 @@
+README.md
+  s_16ea2eea86e36a::t_a0ec751cfc00f3 20,23,44,51,59,61-63
+Sources/Exclusions.swift
+  s_16ea2eea86e36a::t_f34db1d19b6d44 69-72,75,80-94
+Sources/Hotkey.swift
+  s_16ea2eea86e36a::t_22619cb5b4c982 54,69,79,156-157,161
+Tests/Drive/main.swift
+  s_16ea2eea86e36a::t_4f02c273de5a6d 10,70
+Tests/Hotkey/main.swift
+  s_16ea2eea86e36a::t_a4c764628b9d07 64-71,73-74,77-78
+scripts/e2e.sh
+  s_16ea2eea86e36a::t_a3a26695a7eb2a 225,249-282,308
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "22e0a67644d6889367eada5ae6c036f33cb36db3",
+  "prompts": {},
+  "sessions": {
+    "s_16ea2eea86e36a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "44322237-8bc2-4c60-8358-1691f647bcde",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Agentbars <50992557+Agentbars@users.noreply.github.com>"
+    }
+  }
+}
