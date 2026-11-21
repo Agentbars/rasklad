@@ -51,7 +51,13 @@ in memory. Nothing is stored or sent anywhere.
 
 ## Download
 
-Grab `Rasklad-vX.Y.Z.zip` from [Releases](https://github.com/Agentbars/rasklad/releases)
+With [Homebrew](https://brew.sh):
+
+```bash
+brew install --cask agentbars/tap/rasklad
+```
+
+Or grab `Rasklad-vX.Y.Z.zip` from [Releases](https://github.com/Agentbars/rasklad/releases)
 (universal: Apple Silicon and Intel, macOS 13+). Unzip and move `Rasklad.app` to Applications.
 
 The app is not notarized by Apple, so the first launch is blocked: open it once, then go to
