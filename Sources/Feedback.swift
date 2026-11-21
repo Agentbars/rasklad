@@ -1,6 +1,6 @@
 import Cocoa
 
-/// Shows that a conversion happened: a short system sound and a small "EN → RU" hint
+/// Shows that a conversion happened: a short system sound and a small "EN → RU" (or "Aa") hint
 /// near the text caret (or the mouse pointer when the caret position is unknown).
 /// Both can be switched off in the menu; settings live in UserDefaults.
 enum Feedback {
@@ -26,6 +26,13 @@ enum Feedback {
         let text = "\(source.map(label(for:)) ?? "?") → \(label(for: target))"
         // Synthetic keystrokes are delivered asynchronously: let the app move its caret first.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { HintPanel.shared.show(text) }
+    }
+
+    /// Call after a case inversion that changed text: same sound, hint `Aa`.
+    static func showCase() {
+        if soundEnabled { playSound() }
+        guard hintEnabled else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { HintPanel.shared.show("Aa") }
     }
 
     /// Menu checkboxes for the status bar menu.

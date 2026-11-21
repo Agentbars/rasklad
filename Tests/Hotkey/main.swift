@@ -61,5 +61,28 @@ check(run(.rightOption, [(61, true, 0), (61, false, 0.1)], cancelAt: 0.05) == 0,
 check(run(.rightOption, [(58, true, 0), (61, true, 0.02), (61, false, 0.06), (58, false, 0.1)]) == 0, true,
       "right Option with left Option held")
 
+// Case hotkey: default, off, conflicts with the layout hotkey
+check(CaseHotkey.resolve(stored: nil, layout: .doubleShift) == .doubleOption, true, "case: default double Option")
+check(CaseHotkey.resolve(stored: "off", layout: .doubleShift) == nil, true, "case: off")
+check(CaseHotkey.resolve(stored: "doubleControl", layout: .doubleShift) == .doubleControl, true, "case: stored choice")
+check(CaseHotkey.resolve(stored: nil, layout: .doubleOption) == nil, true, "case: default yields to layout double Option")
+check(CaseHotkey.resolve(stored: nil, layout: .rightOption) == nil, true, "case: right Option conflicts with double Option")
+check(CaseHotkey.resolve(stored: "doubleShift", layout: .doubleShift) == nil, true, "case: same hotkey as layout")
+check(CaseHotkey.resolve(stored: "garbage", layout: .doubleShift) == nil, true, "case: unknown value is off")
+check(Hotkey.doubleShift.conflicts(with: .doubleOption), false, "conflict: Shift vs Option")
+
+// Both detectors see the same events, each fires only on its own modifier
+do {
+    var layout = TapDetector(), caseD = TapDetector()
+    layout.hotkey = .doubleShift; caseD.hotkey = .doubleOption
+    var fired: [String] = []
+    for (code, down, t) in double(58) + double(56).map({ ($0.0, $0.1, $0.2 + 1) }) {
+        let flags = down ? CGEventFlags(rawValue: masks[code]!.rawValue | bits[code]!) : CGEventFlags()
+        if layout.flagsChanged(keyCode: code, flags: flags, at: t) { fired.append("layout") }
+        if caseD.flagsChanged(keyCode: code, flags: flags, at: t) { fired.append("case") }
+    }
+    check(fired == ["case", "layout"], true, "two detectors: Option -> case, Shift -> layout")
+}
+
 print(failures == 0 ? "ALL PASSED" : "\(failures) FAILED")
 exit(failures == 0 ? 0 : 1)

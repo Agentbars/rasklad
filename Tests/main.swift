@@ -73,6 +73,42 @@ do {
     r.didDropFirst(10); check("\(r.start)", "0", "run: drop clamps start")
 }
 
+// Case inversion
+check(CaseInverter.invert("пРИВЕТ"), "Привет", "case: ru")
+check(CaseInverter.invert("Hello World 123!"), "hELLO wORLD 123!", "case: en, digits and punctuation kept")
+check(CaseInverter.invert("straße"), "STRAßE", "case: ß kept (would become SS)")
+check(CaseInverter.hasCase("123 ,.") ? "yes" : "no", "no", "case: nothing to flip")
+do {
+    let typed = keys("Ghbdtn vbh", in: abc)
+    let inverted = CaseInverter.invert(typed[...])
+    check(inverted.map(\.produced).joined(), "gHBDTN VBH", "case keys: produced")
+    check(Converter.retype(inverted[...], in: abc).joined(), "gHBDTN VBH", "case keys: strokes type the new case")
+    check(Converter.retype(inverted[...], in: ru).joined(), "пРИВЕТ МИР", "case keys: then layout conversion keeps case")
+    check(CaseInverter.invert(inverted[...]).map(\.produced).joined(), "Ghbdtn vbh", "case keys: second press reverts")
+
+    // Caps Lock on: "G" typed without Shift. Inversion drops Caps Lock from the stroke.
+    let g = abc.reverseMap["g"]!
+    let caps = [TypedKey(stroke: KeyStroke(keyCode: g.keyCode, shift: false, option: false, capsLock: true), produced: "G")]
+    check(Converter.retype(caps[...], in: ru).joined(), "П", "caps: layout conversion before inversion")
+    let capsInv = CaseInverter.invert(caps[...])
+    check(capsInv[0].produced, "g", "caps: inverted produced")
+    check(capsInv[0].stroke.capsLock ? "on" : "off", "off", "caps: stroke drops Caps Lock")
+    check(Converter.retype(capsInv[...], in: ru).joined(), "п", "caps: layout conversion after inversion")
+}
+do {
+    // Case toggle then layout conversion on the same run, as AppDelegate does it.
+    var buffer: [TypedKey] = [], ids: [String] = [], run = TypingRun(), screen = ""
+    type("Ghbdtn", in: abc, &buffer, &ids, &run, &screen)
+    let range = run.range(in: buffer)!
+    let inv = CaseInverter.invert(buffer[range])
+    screen.removeLast(buffer[range].reduce(0) { $0 + $1.produced.count })
+    screen += inv.map(\.produced).joined()
+    buffer.replaceSubrange(range, with: inv)
+    run.didConvert()
+    check(screen, "gHBDTN", "case run: toggled")
+    press(&buffer, &ids, &run, &screen); check(screen, "пРИВЕТ", "case run: then double Shift converts it")
+}
+
 // Per-app exclusions
 func yes(_ b: Bool) -> String { b ? "yes" : "no" }
 var ex = ExclusionList()

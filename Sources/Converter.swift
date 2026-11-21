@@ -89,3 +89,36 @@ struct TypingRun {
         return from..<buffer.count
     }
 }
+
+/// Case inversion («пРИВЕТ» → «Привет», «hello» → «HELLO»). Pure logic.
+enum CaseInverter {
+    /// The character with its case flipped, or nil when it has no case or the flip
+    /// would change its length (ß → SS).
+    static func invert(_ ch: Character) -> Character? {
+        let flipped: String
+        if ch.isUppercase { flipped = ch.lowercased() } else if ch.isLowercase { flipped = ch.uppercased() } else { return nil }
+        guard flipped.count == 1, let result = flipped.first, result != ch else { return nil }
+        return result
+    }
+
+    static func invert(_ text: String) -> String {
+        String(text.map { invert($0) ?? $0 })
+    }
+
+    /// Typed keys with inverted case. A letter key's stroke is rewritten so that it types the
+    /// new case on its own: Shift on for upper case, off for lower, Caps Lock dropped.
+    /// Then converting the layout afterwards keeps the new case.
+    static func invert(_ keys: ArraySlice<TypedKey>) -> [TypedKey] {
+        keys.map { key in
+            let produced = invert(key.produced)
+            guard produced != key.produced else { return key }
+            let upper = produced.contains { $0.isUppercase }
+            let s = key.stroke
+            return TypedKey(stroke: KeyStroke(keyCode: s.keyCode, shift: upper, option: s.option, capsLock: false),
+                            produced: produced)
+        }
+    }
+
+    /// True when the text has at least one letter whose case can be flipped.
+    static func hasCase(_ text: String) -> Bool { text.contains { invert($0) != nil } }
+}
