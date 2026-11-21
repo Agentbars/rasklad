@@ -1,0 +1,35 @@
+.github/workflows/release.yml
+  s_eb19f5c4e5e6c7::t_a30a3608ea54a9 22-41,44-45,54-63,71-73,82,84-87
+Info.plist
+  s_eb19f5c4e5e6c7::t_66655472aa0815 27-32
+README.md
+  s_eb19f5c4e5e6c7::t_36abd52ba40636 54,57,63-66,68-70,73-83,88-90,145
+Sources/Updates.swift
+  s_eb19f5c4e5e6c7::t_2ba85243b5874b 1-19
+Sources/main.swift
+  s_eb19f5c4e5e6c7::t_df325d5be9d86d 31,176
+docs/releasing.md
+  s_eb19f5c4e5e6c7::t_99b80a7c9eacd4 1-68
+scripts/make-appcast.sh
+  s_eb19f5c4e5e6c7::t_5bc2341e219f40 1-37
+scripts/set-release-secrets.sh
+  s_eb19f5c4e5e6c7::t_d76ad94e34b9a3 1-15
+build.sh
+  s_eb19f5c4e5e6c7::t_55c6d14940fde8 5,9-23,29,31,43,48-62,64,66-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "38d3f5fdf4c19b3903a989d4702ae8e740b982da",
+  "prompts": {},
+  "sessions": {
+    "s_eb19f5c4e5e6c7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "133de67e-f0a3-41b9-ab77-c3d0ef0e5c0b",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Agentbars <50992557+Agentbars@users.noreply.github.com>"
+    }
+  }
+}
