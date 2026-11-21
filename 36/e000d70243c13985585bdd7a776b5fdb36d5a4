@@ -1,0 +1,19 @@
+README.md
+  s_6dc80377758118::t_73dde83c37fe9e 54-60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "36e000d70243c13985585bdd7a776b5fdb36d5a4",
+  "prompts": {},
+  "sessions": {
+    "s_6dc80377758118": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8d733bf6-c15a-482d-9e00-e4fd84cde988",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Agentbars <50992557+Agentbars@users.noreply.github.com>"
+    }
+  }
+}
