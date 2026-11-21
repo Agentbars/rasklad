@@ -1,0 +1,25 @@
+README.md
+  s_16ea2eea86e36a::t_b815dad0c7585b 32-40
+Sources/main.swift
+  s_16ea2eea86e36a::t_63e2dda7e46ff4 136-139,170-177
+build.sh
+  s_16ea2eea86e36a::t_299c3efb822849 15-23
+scripts/make-signing-cert.sh
+  s_16ea2eea86e36a::t_969862da18a11a 1-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "670211d3058ec88c44ef5aff98f67b03ea2e7da8",
+  "prompts": {},
+  "sessions": {
+    "s_16ea2eea86e36a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "44322237-8bc2-4c60-8358-1691f647bcde",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Agentbars <50992557+Agentbars@users.noreply.github.com>"
+    }
+  }
+}
