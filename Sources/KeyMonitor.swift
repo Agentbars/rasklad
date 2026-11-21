@@ -2,7 +2,7 @@ import Cocoa
 import Carbon
 
 /// Watches the keyboard (listen-only), remembers what was typed since the last
-/// click / arrow / shortcut, and fires `onTrigger` on a double tap of Shift.
+/// click / arrow / shortcut, and fires `onTrigger` on the chosen hotkey (see Hotkey.swift).
 final class KeyMonitor {
     var onTrigger: (() -> Void)?
     private(set) var buffer: [TypedKey] = []
@@ -10,18 +10,17 @@ final class KeyMonitor {
     private var tap: CFMachPort?
     private var currentLayoutID: String? = Layouts.currentID()
 
-    private var shiftDownAt: TimeInterval?
-    private var shiftClean = false
-    private var lastShiftTapAt: TimeInterval = 0
-
-    static let doubleTapInterval: TimeInterval = 0.45
-    static let maxTapLength: TimeInterval = 0.3
+    private var tapDetector = TapDetector()
+    var hotkey: Hotkey {
+        get { tapDetector.hotkey }
+        set { tapDetector.hotkey = newValue }
+    }
 
     var isRunning: Bool { tap != nil }
 
     /// Set while an excluded app is frontmost: keys are neither buffered nor checked for the hotkey.
     var paused = false {
-        didSet { if paused { reset(); lastShiftTapAt = 0; shiftClean = false } }
+        didSet { if paused { reset(); tapDetector.cancel() } }
     }
 
     init() {
@@ -90,14 +89,12 @@ final class KeyMonitor {
 
         switch type {
         case .keyDown:
-            shiftClean = false
-            lastShiftTapAt = 0
+            tapDetector.cancel()
             handleKey(event)
         case .flagsChanged:
             handleFlags(event)
         default: // mouse click: the caret may have moved
-            shiftClean = false
-            lastShiftTapAt = 0
+            tapDetector.cancel()
             reset()
         }
     }
@@ -146,31 +143,10 @@ final class KeyMonitor {
     private func handleFlags(_ event: CGEvent) {
         let code = event.getIntegerValueField(.keyboardEventKeycode)
         let flags = event.flags
-        let now = ProcessInfo.processInfo.systemUptime
         log.debug("flags: key=\(code) flags=\(String(flags.rawValue, radix: 16))")
-        guard code == 56 || code == 60 else { // not left/right Shift
-            shiftClean = false
-            lastShiftTapAt = 0
-            return
-        }
-        if flags.contains(.maskShift) { // pressed
-            shiftClean = flags.intersection([.maskCommand, .maskControl, .maskAlternate]).isEmpty
-            shiftDownAt = now
-            return
-        }
-        // released
-        defer { shiftClean = false }
-        log.debug("shift: released clean=\(self.shiftClean) held=\(now - (self.shiftDownAt ?? now))")
-        guard shiftClean, let down = shiftDownAt, now - down < Self.maxTapLength else {
-            lastShiftTapAt = 0
-            return
-        }
-        if lastShiftTapAt > 0, now - lastShiftTapAt < Self.doubleTapInterval {
-            lastShiftTapAt = 0
-            log.info("shift: double tap")
+        if tapDetector.flagsChanged(keyCode: code, flags: flags, at: ProcessInfo.processInfo.systemUptime) {
+            log.info("hotkey: \(self.hotkey.rawValue)")
             DispatchQueue.main.async { [weak self] in self?.onTrigger?() }
-        } else {
-            lastShiftTapAt = now
         }
     }
 }

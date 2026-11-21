@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.menu = menu
         updateIcon()
 
+        monitor.hotkey = Hotkey.current
         monitor.onTrigger = { [weak self] in self?.convert() }
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
@@ -151,7 +152,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             menu.addItem(item("Перезапустить Rasklad (после выдачи доступа)", #selector(relaunch)))
         }
         if hasAccessibility && monitor.isRunning {
-            let info = NSMenuItem(title: "Двойной Shift — исправить раскладку", action: nil, keyEquivalent: "")
+            let info = NSMenuItem(title: "\(monitor.hotkey.title) — исправить раскладку", action: nil, keyEquivalent: "")
             info.isEnabled = false
             menu.addItem(info)
         }
@@ -161,6 +162,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         toggle.state = enabled ? .on : .off
         menu.addItem(toggle)
         exclusions.menuItems().forEach(menu.addItem)
+
+        menu.addItem(hotkeyMenuItem(target: self, action: #selector(chooseHotkey(_:)), current: monitor.hotkey))
 
         let login = item("Открывать при входе", #selector(toggleLogin))
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
@@ -180,6 +183,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func openAccessibility() { openPrivacySettings("Privacy_Accessibility") }
     @objc private func openInputMonitoring() { openPrivacySettings("Privacy_ListenEvent") }
     @objc private func toggleEnabled() { enabled.toggle(); monitor.reset() }
+    @objc private func chooseHotkey(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String, let hotkey = Hotkey(rawValue: raw) else { return }
+        Hotkey.current = hotkey
+        monitor.hotkey = hotkey
+    }
     @objc private func quit() { NSApp.terminate(nil) }
 
     @objc private func relaunch() {
