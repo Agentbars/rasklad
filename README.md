@@ -51,28 +51,43 @@ in memory. Nothing is stored or sent anywhere.
 
 ## Download
 
-With [Homebrew](https://brew.sh):
+With [Homebrew](https://brew.sh) (Homebrew 7+ asks you to trust a third-party tap once):
 
 ```bash
-brew install --cask agentbars/tap/rasklad
+brew trust --cask agentbars/tap/rasklad && brew install --cask agentbars/tap/rasklad
 ```
 
 Or grab `Rasklad-vX.Y.Z.zip` from [Releases](https://github.com/Agentbars/rasklad/releases)
 (universal: Apple Silicon and Intel, macOS 13+). Unzip and move `Rasklad.app` to Applications.
 
-The app is not notarized by Apple, so the first launch is blocked: open it once, then go to
-System Settings → Privacy & Security → **Open Anyway**. Grant **Accessibility** and
-**Input Monitoring** when asked, then relaunch Rasklad from its menu («Перезапустить Rasklad»).
+**Updates.** From 0.3 Rasklad updates itself with [Sparkle](https://sparkle-project.org):
+it checks for a new version once a day and asks before installing; menu →
+«Проверить обновления…» checks right away. Updates are verified with an EdDSA signature and
+signed with the same certificate every time, so macOS keeps Rasklad's permissions after an update.
 
-Releases are built by GitHub Actions when a `v*` tag is pushed:
+**First launch.** The app is not notarized by Apple, so macOS blocks the first launch
+(Homebrew installs it with the same quarantine flag as a browser download). Open it once, then
+go to System Settings → Privacy & Security → **Open Anyway**. Or clear the flag yourself:
 
 ```bash
-git tag v0.2.0 && git push origin v0.2.0
+xattr -dr com.apple.quarantine /Applications/Rasklad.app
+```
+
+Then grant **Accessibility** and **Input Monitoring** when asked and relaunch Rasklad from its
+menu («Перезапустить Rasklad»).
+
+Releases are built by GitHub Actions when a `v*` tag is pushed (see
+[docs/releasing.md](docs/releasing.md)):
+
+```bash
+git tag v0.3.0 && git push origin v0.3.0
 ```
 
 ## Build
 
-Requires macOS 13+ and Xcode (or the Command Line Tools).
+Requires macOS 13+ and Xcode (or the Command Line Tools). The first build downloads the pinned
+[Sparkle](https://github.com/sparkle-project/Sparkle/releases) release into `build/deps`
+(checked against its SHA-256).
 
 ```bash
 ./build.sh install
@@ -127,6 +142,7 @@ Newly granted permissions are picked up only after Rasklad is relaunched.
 | `Sources/Exclusions.swift` | Per-app exclusions: list (pure logic), storage, frontmost app, menu items |
 | `Sources/TextOutput.swift` | Synthetic backspaces and Unicode typing |
 | `Sources/Feedback.swift` | Conversion sound and the `EN → RU` hint near the caret |
+| `Sources/Updates.swift` | Sparkle auto-updates, «Проверить обновления…» menu item |
 | `Sources/main.swift` | Menu bar UI, permissions, launch at login |
 
 ## Icons
