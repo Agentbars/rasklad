@@ -7,6 +7,12 @@ APP=build/Rasklad.app
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS"
 cp Info.plist "$APP/Contents/Info.plist"
+mkdir -p "$APP/Contents/Resources"
+cp Resources/MenuBarIcon.png Resources/MenuBarIcon@2x.png "$APP/Contents/Resources/"
+# App icon: Icon Composer bundle -> Assets.car (macOS 26+) and AppIcon.icns (older macOS).
+xcrun actool Resources/AppIcon.icon --compile "$APP/Contents/Resources" --platform macosx \
+  --minimum-deployment-target 13.0 --app-icon AppIcon \
+  --output-partial-info-plist build/actool-partial.plist >/dev/null
 
 swiftc -O -swift-version 5 -target arm64-apple-macos13.0 \
   -framework Cocoa -framework Carbon -framework ServiceManagement \

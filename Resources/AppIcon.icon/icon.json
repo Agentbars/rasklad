@@ -1,0 +1,27 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "extended-srgb:0.26000,0.42000,1.00000,1.00000",
+      "extended-srgb:0.47000,0.25000,0.93000,1.00000"
+    ]
+  },
+  "groups" : [
+    {
+      "layers" : [
+        { "image-name" : "legend.png", "name" : "legend" }
+      ],
+      "shadow" : { "kind" : "neutral", "opacity" : 0.4 },
+      "translucency" : { "enabled" : false, "value" : 0 }
+    },
+    {
+      "layers" : [
+        { "image-name" : "keycap.png", "name" : "keycap" }
+      ],
+      "shadow" : { "kind" : "neutral", "opacity" : 0.5 },
+      "translucency" : { "enabled" : true, "value" : 0.15 }
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : [ "macOS" ]
+  }
+}

@@ -130,10 +130,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // MARK: - Menu
 
+    /// Template keycap with A/Я (Resources/MenuBarIcon*.png, drawn by scripts/make-icons.swift).
+    private static let menuBarIcon: NSImage? = {
+        let image = Bundle.main.image(forResource: "MenuBarIcon")
+        image?.isTemplate = true
+        image?.accessibilityDescription = "Rasklad"
+        return image
+    }()
+
     private func updateIcon() {
         let ok = monitor.isRunning && hasAccessibility
-        let symbol = !ok ? "exclamationmark.triangle" : (enabled ? "keyboard" : "keyboard.badge.ellipsis")
-        statusItem?.button?.image = NSImage(systemSymbolName: symbol, accessibilityDescription: "Rasklad")
+        statusItem?.button?.image = ok
+            ? (Self.menuBarIcon ?? NSImage(systemSymbolName: "keyboard", accessibilityDescription: "Rasklad"))
+            : NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: "Rasklad: нужен доступ")
         statusItem?.button?.appearsDisabled = !enabled
     }
 

@@ -8,6 +8,10 @@
     <string>Rasklad</string>
     <key>CFBundleDisplayName</key>
     <string>Rasklad</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
     <key>CFBundleExecutable</key>
     <string>Rasklad</string>
     <key>CFBundlePackageType</key>

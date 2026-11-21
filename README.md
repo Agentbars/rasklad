@@ -1,4 +1,6 @@
-# Rasklad
+<p align="center"><img src="docs/logo.png" width="160" alt="Rasklad icon"></p>
+
+<h1 align="center">Rasklad</h1>
 
 A tiny macOS menu bar app that fixes text typed in the wrong keyboard layout.
 Typed `ghbdtn` instead of `привет`? Double-tap **Shift** (or another hotkey you pick) and it's fixed.
@@ -110,6 +112,17 @@ Newly granted permissions are picked up only after Rasklad is relaunched.
 | `Sources/TextOutput.swift` | Synthetic backspaces and Unicode typing |
 | `Sources/Feedback.swift` | Conversion sound and the `EN → RU` hint near the caret |
 | `Sources/main.swift` | Menu bar UI, permissions, launch at login |
+
+## Icons
+
+All images are drawn from code by `scripts/make-icons.swift` (no binary design files):
+the app icon as an Icon Composer bundle (`Resources/AppIcon.icon`, compiled by `build.sh` into a
+Liquid Glass icon for macOS 26+ and `AppIcon.icns` for older systems), the menu bar template icon,
+`docs/logo.png` and `docs/social-preview.png` (GitHub repo → Settings → Social preview).
+
+```bash
+swift scripts/make-icons.swift
+```
 
 ## License
 
