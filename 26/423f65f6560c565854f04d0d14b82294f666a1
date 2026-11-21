@@ -1,0 +1,29 @@
+Info.plist
+  s_16ea2eea86e36a::t_3d13b6926c4c27 11-14
+README.md
+  s_16ea2eea86e36a::t_b17db426a86c2f 1-3,116-126
+Resources/AppIcon.icon/icon.json
+  s_16ea2eea86e36a::t_11925ed109aa68 1-27
+Sources/main.swift
+  s_16ea2eea86e36a::t_9a7ff4cd3a441a 133-140,143-145
+build.sh
+  s_16ea2eea86e36a::t_be5ce1da892817 10-15
+scripts/make-icons.swift
+  s_16ea2eea86e36a::t_12298b2cff618e 1-253
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "26423f65f6560c565854f04d0d14b82294f666a1",
+  "prompts": {},
+  "sessions": {
+    "s_16ea2eea86e36a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "44322237-8bc2-4c60-8358-1691f647bcde",
+        "model": "unknown"
+      },
+      "human_author": "Agentbars <50992557+Agentbars@users.noreply.github.com>"
+    }
+  }
+}
