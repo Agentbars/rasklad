@@ -49,3 +49,7 @@ The tests use the layouts enabled on your Mac and expect ABC (or US) and Russian
 | `Sources/KeyMonitor.swift` | Listen-only event tap, typed-keys buffer, double-Shift detection |
 | `Sources/TextOutput.swift` | Synthetic backspaces and Unicode typing |
 | `Sources/main.swift` | Menu bar UI, permissions, launch at login |
+
+## License
+
+MIT, see [LICENSE](LICENSE).
