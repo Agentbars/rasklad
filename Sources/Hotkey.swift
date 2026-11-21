@@ -144,18 +144,60 @@ struct TapDetector {
     }
 }
 
-/// "Горячая клавиша" submenu with a checkmark on the current choice.
-/// Each item carries the Hotkey raw value in `representedObject`.
-func hotkeyMenuItem(target: AnyObject, action: Selector, current: Hotkey) -> NSMenuItem {
+extension Hotkey {
+    /// Two hotkeys on the same modifier can't coexist (double Option vs right Option
+    /// would both fire on the same taps).
+    func conflicts(with other: Hotkey) -> Bool { modifier == other.modifier }
+}
+
+/// The second action, case inversion. Saved in UserDefaults under `caseHotkey`
+/// as a Hotkey raw value or "off"; double Option by default.
+enum CaseHotkey {
+    static let defaultsKey = "caseHotkey"
+    static let off = "off"
+    static let defaultValue: Hotkey = .doubleOption
+
+    /// Effective hotkey: nil when switched off or when it conflicts with the layout
+    /// hotkey (the layout hotkey wins, e.g. for users who picked double Option for it).
+    static func resolve(stored: String?, layout: Hotkey) -> Hotkey? {
+        let hotkey: Hotkey?
+        if let stored { hotkey = Hotkey(rawValue: stored) } else { hotkey = defaultValue }
+        guard let hotkey, !hotkey.conflicts(with: layout) else { return nil }
+        return hotkey
+    }
+
+    static var current: Hotkey? {
+        get { resolve(stored: UserDefaults.standard.string(forKey: defaultsKey), layout: Hotkey.current) }
+        set { UserDefaults.standard.set(newValue?.rawValue ?? off, forKey: defaultsKey) }
+    }
+}
+
+/// Hotkey submenu with a checkmark on the current choice. Each item carries the Hotkey raw
+/// value (or `CaseHotkey.off`) in `representedObject`. Options on the same modifier as
+/// `taken` (the other action's hotkey) are disabled and say who holds them.
+func hotkeyMenuItem(title: String, target: AnyObject, action: Selector, current: Hotkey?,
+                    allowOff: Bool = false, taken: Hotkey? = nil, takenBy: String = "") -> NSMenuItem {
     let submenu = NSMenu()
+    submenu.autoenablesItems = false
     for hotkey in Hotkey.allCases {
-        let item = NSMenuItem(title: hotkey.title, action: action, keyEquivalent: "")
+        let blocked = taken.map(hotkey.conflicts(with:)) ?? false
+        let item = NSMenuItem(title: blocked ? "\(hotkey.title) (занято: \(takenBy))" : hotkey.title,
+                              action: action, keyEquivalent: "")
         item.target = target
         item.representedObject = hotkey.rawValue
         item.state = hotkey == current ? .on : .off
+        item.isEnabled = !blocked
         submenu.addItem(item)
     }
-    let parent = NSMenuItem(title: "Горячая клавиша", action: nil, keyEquivalent: "")
+    if allowOff {
+        submenu.addItem(.separator())
+        let item = NSMenuItem(title: "Выключено", action: action, keyEquivalent: "")
+        item.target = target
+        item.representedObject = CaseHotkey.off
+        item.state = current == nil ? .on : .off
+        submenu.addItem(item)
+    }
+    let parent = NSMenuItem(title: title, action: nil, keyEquivalent: "")
     parent.submenu = submenu
     return parent
 }

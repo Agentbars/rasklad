@@ -20,6 +20,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         monitor.hotkey = Hotkey.current
         monitor.onTrigger = { [weak self] in self?.convert() }
+        monitor.caseHotkey = CaseHotkey.current
+        monitor.onCaseTrigger = { [weak self] in self?.toggleCase() }
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
         ) { [weak self] _ in self?.monitor.reset() }
@@ -84,6 +86,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// Nothing typed since the last click or arrow key: convert the selected text instead.
     private func convertSelection(layouts: [KeyboardLayout]) {
+        withSelection { text in
+            guard let result = Converter.convertText(text, layouts: layouts) else { return }
+            TextOutput.type(result.text)
+            Layouts.select(result.target)
+            self.monitor.reset()
+            Feedback.show(from: nil, to: result.target, in: layouts)
+        }
+    }
+
+    /// Copies the selection with ⌘C, hands its text to `body`, then restores the clipboard.
+    /// Does nothing when nothing is selected.
+    private func withSelection(_ body: @escaping (String) -> Void) {
         let pasteboard = NSPasteboard.general
         let saved = snapshot(pasteboard)
         let before = pasteboard.changeCount
@@ -95,13 +109,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             defer {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { self.restore(saved, to: pasteboard) }
             }
-            guard let text = pasteboard.string(forType: .string), !text.isEmpty,
-                  let result = Converter.convertText(text, layouts: layouts) else { return }
-            TextOutput.type(result.text)
-            Layouts.select(result.target)
-            self.monitor.reset()
-            Feedback.show(from: nil, to: result.target, in: layouts)
+            guard let text = pasteboard.string(forType: .string), !text.isEmpty else { return }
+            body(text)
         }
+    }
+
+    // MARK: - Case
+
+    /// Inverts the case of the typing run (or of the selection when nothing was typed).
+    /// The layout is not switched.
+    private func toggleCase() {
+        log.info("case: enabled=\(self.enabled) ax=\(self.hasAccessibility) secure=\(IsSecureEventInputEnabled()) buffer=\(self.monitor.buffer.count)")
+        guard enabled, hasAccessibility, !IsSecureEventInputEnabled() else { return }
+
+        guard let range = monitor.run else {
+            withSelection { text in
+                guard CaseInverter.hasCase(text) else { return }
+                TextOutput.type(CaseInverter.invert(text))
+                self.monitor.reset()
+                Feedback.showCase()
+            }
+            return
+        }
+        let keys = monitor.buffer[range]
+        let newKeys = CaseInverter.invert(keys)
+        guard zip(keys, newKeys).contains(where: { $0.produced != $1.produced }) else { return }
+        // Delete and retype from the first changed key only.
+        let first = zip(keys.indices, newKeys).first { keys[$0].produced != $1.produced }!.0
+        let tail = keys[first...]
+        TextOutput.backspace(tail.reduce(0) { $0 + $1.produced.count })
+        TextOutput.type(newKeys[(first - range.lowerBound)...].map(\.produced).joined())
+        monitor.replaceKeys(range, with: newKeys)
+        Feedback.showCase()
     }
 
     private func snapshot(_ pasteboard: NSPasteboard) -> [[NSPasteboard.PasteboardType: Data]] {
@@ -156,6 +195,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let info = NSMenuItem(title: "\(monitor.hotkey.title) — исправить раскладку", action: nil, keyEquivalent: "")
             info.isEnabled = false
             menu.addItem(info)
+            if let caseHotkey = monitor.caseHotkey {
+                let info = NSMenuItem(title: "\(caseHotkey.title) — сменить регистр", action: nil, keyEquivalent: "")
+                info.isEnabled = false
+                menu.addItem(info)
+            }
         }
         menu.addItem(.separator())
 
@@ -164,7 +208,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(toggle)
         exclusions.menuItems().forEach(menu.addItem)
 
-        menu.addItem(hotkeyMenuItem(target: self, action: #selector(chooseHotkey(_:)), current: monitor.hotkey))
+        menu.addItem(hotkeyMenuItem(title: "Горячая клавиша", target: self, action: #selector(chooseHotkey(_:)),
+                                    current: monitor.hotkey, taken: monitor.caseHotkey, takenBy: "смена регистра"))
+        menu.addItem(hotkeyMenuItem(title: "Смена регистра", target: self, action: #selector(chooseCaseHotkey(_:)),
+                                    current: monitor.caseHotkey, allowOff: true,
+                                    taken: monitor.hotkey, takenBy: "раскладка"))
 
         let login = item("Открывать при входе", #selector(toggleLogin))
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
@@ -188,6 +236,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard let raw = sender.representedObject as? String, let hotkey = Hotkey(rawValue: raw) else { return }
         Hotkey.current = hotkey
         monitor.hotkey = hotkey
+        monitor.caseHotkey = CaseHotkey.current // a saved case hotkey that conflicted may be free now
+    }
+    @objc private func chooseCaseHotkey(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String else { return }
+        CaseHotkey.current = Hotkey(rawValue: raw) // "off" -> nil
+        monitor.caseHotkey = CaseHotkey.current
     }
     @objc private func quit() { NSApp.terminate(nil) }
 

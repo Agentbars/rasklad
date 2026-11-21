@@ -2,9 +2,11 @@ import Cocoa
 import Carbon
 
 /// Watches the keyboard (listen-only), remembers what was typed since the last
-/// click / arrow / shortcut, and fires `onTrigger` on the chosen hotkey (see Hotkey.swift).
+/// click / arrow / shortcut, and fires `onTrigger` on the layout hotkey and `onCaseTrigger`
+/// on the case hotkey (see Hotkey.swift).
 final class KeyMonitor {
     var onTrigger: (() -> Void)?
+    var onCaseTrigger: (() -> Void)?
     private(set) var buffer: [TypedKey] = []
     private(set) var bufferLayouts: [String] = [] // layout id each key was typed in
     private var tap: CFMachPort?
@@ -19,11 +21,25 @@ final class KeyMonitor {
         set { tapDetector.hotkey = newValue }
     }
 
+    private var caseDetector = TapDetector()
+    /// Case inversion hotkey; nil: off.
+    var caseHotkey: Hotkey? {
+        didSet {
+            if let caseHotkey { caseDetector.hotkey = caseHotkey }
+            caseDetector.cancel()
+        }
+    }
+
+    private func cancelTaps() {
+        tapDetector.cancel()
+        caseDetector.cancel()
+    }
+
     var isRunning: Bool { tap != nil }
 
     /// Set while an excluded app is frontmost: keys are neither buffered nor checked for the hotkey.
     var paused = false {
-        didSet { if paused { reset(); tapDetector.cancel() } }
+        didSet { if paused { reset(); cancelTaps() } }
     }
 
     init() {
@@ -96,6 +112,13 @@ final class KeyMonitor {
         }
     }
 
+    /// Records a case inversion of `range`: the keys are replaced (see `CaseInverter`), the
+    /// layout stays. The next press of either hotkey acts on the same text.
+    func replaceKeys(_ range: Range<Int>, with keys: [TypedKey]) {
+        buffer.replaceSubrange(range, with: keys)
+        typingRun.didConvert()
+    }
+
     func layoutID(at index: Int) -> String? {
         bufferLayouts.indices.contains(index) ? bufferLayouts[index] : nil
     }
@@ -114,12 +137,12 @@ final class KeyMonitor {
 
         switch type {
         case .keyDown:
-            tapDetector.cancel()
+            cancelTaps()
             handleKey(event)
         case .flagsChanged:
             handleFlags(event)
         default: // mouse click: the caret may have moved
-            tapDetector.cancel()
+            cancelTaps()
             reset()
         }
     }
@@ -175,6 +198,11 @@ final class KeyMonitor {
         if tapDetector.flagsChanged(keyCode: code, flags: flags, at: ProcessInfo.processInfo.systemUptime) {
             log.info("hotkey: \(self.hotkey.rawValue)")
             DispatchQueue.main.async { [weak self] in self?.onTrigger?() }
+        }
+        if caseHotkey != nil,
+           caseDetector.flagsChanged(keyCode: code, flags: flags, at: ProcessInfo.processInfo.systemUptime) {
+            log.info("case hotkey: \(self.caseHotkey?.rawValue ?? "")")
+            DispatchQueue.main.async { [weak self] in self?.onCaseTrigger?() }
         }
     }
 }

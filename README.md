@@ -17,21 +17,31 @@ Typed `ghbdtn vbh` instead of `привет мир`? Double-tap **Shift** (or an
   conversion, the next double tap converts only what you typed after it.
 - **Selection.** Select text (mouse or Shift+arrows), then double-tap Shift: the selection is
   converted. The clipboard is restored afterwards.
+- **Case.** Double-tap **Option** to invert the case of the same text: `пРИВЕТ` → `Привет`,
+  `hello` → `HELLO`. It works like the layout fix: the text typed since the last reset (or the
+  selection, with the clipboard restored) is re-typed, the layout is not switched, double-tap again
+  to switch back. You can mix both: `Ghbdtn` → double Option → `gHBDTN` → double Shift → `пРИВЕТ`.
+  Letters with no single-letter counterpart (`ß`) and non-letters stay as they are.
+- **Caps Lock** doesn't need to be turned off. Text typed with Caps Lock on is remembered as it
+  appeared (upper case); after a case inversion each letter is remembered as typed with or without
+  Shift and no Caps Lock, so a later layout fix keeps the new case. Rasklad types its output as
+  Unicode characters, so a Caps Lock still on at that moment doesn't change it.
 - Works with any layouts enabled in System Settings (ABC, Russian, ...). With more than two,
   repeated taps cycle through them.
 - Password fields are never touched (macOS secure input).
 - **Feedback.** Each conversion plays a soft "Tink" and shows a small hint like `EN → RU`
   next to the text caret (or the mouse pointer if the app doesn't report the caret). The hint
-  fades out in under a second and never takes focus. Turn either off in the menu:
+  fades out in under a second and never takes focus. A case inversion shows `Aa`. Turn either off in the menu:
   «Звук при исправлении», «Подсказка на экране».
-- **Excluded apps.** In excluded apps Rasklad neither remembers keys nor reacts to double Shift.
+- **Excluded apps.** In excluded apps Rasklad neither remembers keys nor reacts to its hotkeys.
   Menu → «Не работать в «…»» toggles the app you were in; «Исключения» lists them (click to remove).
   By default: Terminal, iTerm2, Warp, Ghostty, kitty, Alacritty, WezTerm, all JetBrains IDEs
   (`com.jetbrains.*`, where double Shift is Search Everywhere) and Android Studio.
 
 ### Hotkey
 
-Pick the trigger in the menu bar menu → **Горячая клавиша**:
+Pick the layout trigger in the menu bar menu → **Горячая клавиша** and the case trigger in
+**Смена регистра** (same options plus «Выключено»; default: Двойной Option):
 
 | Option | Trigger |
 | --- | --- |
@@ -42,7 +52,13 @@ Pick the trigger in the menu bar menu → **Горячая клавиша**:
 
 A tap counts only when it is clean (no other key, click or modifier in between), short
 (< 0.3 s) and, for double taps, the second one comes within 0.45 s. The choice is saved
-(`defaults read local.rasklad hotkey`). macOS can use double Control for Dictation; if both
+(`defaults read local.rasklad hotkey`, `defaults read local.rasklad caseHotkey`).
+
+The two actions can't share a modifier key: in each submenu the options on the modifier the
+other action uses are greyed out and marked «занято», so to move the layout fix to Option, first
+pick another key (or «Выключено») for the case. Double Option and right Option count as the same
+key. If the saved choices clash anyway (e.g. you used double Option for the layout before the
+case action existed), the layout fix wins and the case action is off until you pick a free key. macOS can use double Control for Dictation; if both
 fire, change one of them. Key combos such as ⌥Space are not offered: Rasklad only listens to the
 keyboard, so the Space would still reach the app and type a character.
 
@@ -121,13 +137,13 @@ Newly granted permissions are picked up only after Rasklad is relaunched.
 | File | What it does |
 | --- | --- |
 | `Sources/Layouts.swift` | Enabled layouts, key → character via `UCKeyTranslate`, reverse maps |
-| `Sources/Converter.swift` | Typing run (what the hotkey converts), text conversion (pure logic) |
-| `Sources/KeyMonitor.swift` | Listen-only event tap, typed-keys buffer |
-| `Sources/Hotkey.swift` | Hotkey choice, modifier tap / double-tap detection, its submenu |
+| `Sources/Converter.swift` | Typing run (what the hotkey converts), text conversion, case inversion (pure logic) |
+| `Sources/KeyMonitor.swift` | Listen-only event tap, typed-keys buffer, both hotkeys |
+| `Sources/Hotkey.swift` | Layout and case hotkey choice and conflicts, modifier tap / double-tap detection, submenus |
 | `Sources/Exclusions.swift` | Per-app exclusions: list (pure logic), storage, frontmost app, menu items |
 | `Sources/TextOutput.swift` | Synthetic backspaces and Unicode typing |
-| `Sources/Feedback.swift` | Conversion sound and the `EN → RU` hint near the caret |
-| `Sources/main.swift` | Menu bar UI, permissions, launch at login |
+| `Sources/Feedback.swift` | Conversion sound and the `EN → RU` / `Aa` hint near the caret |
+| `Sources/main.swift` | Conversion and case actions, selection via clipboard, menu bar UI, permissions, launch at login |
 
 ## Icons
 
