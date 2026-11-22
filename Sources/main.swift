@@ -162,7 +162,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // MARK: - Menu
 
-    /// Template keycap with A/Я (Resources/MenuBarIcon*.png, drawn by scripts/make-icons.swift).
+    /// Template keycap with Z/Я (Resources/MenuBarIcon*.png, drawn by scripts/make-icons.swift).
     private static let menuBarIcon: NSImage? = {
         let image = Bundle.main.image(forResource: "MenuBarIcon")
         image?.isTemplate = true

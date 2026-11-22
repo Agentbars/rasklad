@@ -77,7 +77,7 @@ func drawGlyph(_ text: String, font: NSFont, color: NSColor, center: CGPoint, in
     ctx.restoreGState()
 }
 
-/// Two curved arrows in the empty corners: A → Я over the top-right, Я → A under the bottom-left.
+/// Two curved arrows in the empty corners: Z → Я over the top-right, Я → Z under the bottom-left.
 func drawSwapArrows(center c: CGPoint, radius r: CGFloat, width: CGFloat, color: NSColor, in ctx: CGContext) {
     ctx.saveGState()
     ctx.setStrokeColor(color.cgColor)
@@ -133,7 +133,7 @@ func drawKeycap(_ ctx: CGContext, glass: Bool) {
 func drawLegend(_ ctx: CGContext) {
     let font = roundedFont(270, .heavy)
     let inset: CGFloat = 200
-    drawGlyph("A", font: font, color: latinColor, center: CGPoint(x: keycapRect.minX + inset, y: keycapRect.maxY - inset), in: ctx)
+    drawGlyph("Z", font: font, color: latinColor, center: CGPoint(x: keycapRect.minX + inset, y: keycapRect.maxY - inset), in: ctx)
     drawGlyph("Я", font: font, color: cyrillicColor, center: CGPoint(x: keycapRect.maxX - inset, y: keycapRect.minY + inset), in: ctx)
     drawSwapArrows(center: CGPoint(x: keycapRect.midX, y: keycapRect.midY), radius: 215, width: 30, color: arrowColor, in: ctx)
 }
@@ -217,7 +217,7 @@ func menuBarIcon(scale: Int) -> NSBitmapImageRep {
         ctx.addPath(CGPath(roundedRect: cap, cornerWidth: 3.8, cornerHeight: 3.8, transform: nil))
         ctx.strokePath()
         let font = roundedFont(8.6, .bold)
-        drawGlyph("A", font: font, color: .black, center: CGPoint(x: cap.minX + 5.4, y: cap.maxY - 4.6), in: ctx)
+        drawGlyph("Z", font: font, color: .black, center: CGPoint(x: cap.minX + 5.4, y: cap.maxY - 4.6), in: ctx)
         drawGlyph("Я", font: font, color: .black, center: CGPoint(x: cap.maxX - 5.4, y: cap.minY + 4.6), in: ctx)
     }
 }
